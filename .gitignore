@@ -7,7 +7,7 @@ __pycache__/
 *.so
 
 #database SQLite Files
-database.db
+**/database.db
 
 # Distribution / packaging
 .Python
