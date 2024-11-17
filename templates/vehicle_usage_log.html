@@ -122,7 +122,7 @@
                     <strong>Date of Usage:</strong> ${log.date_of_usage}<br>
                     <strong>Purpose:</strong> ${log.purpose}<br>
                     <strong>Distance Travelled:</strong> ${log.distance_travelled} km<br>
-                    <strong>Is deleted:</strong> ${log.isDeleted} <br>
+                    <strong>Is deleted:</strong> ${log.is_deleted == 0 ? false : true} <br>
                     <hr>
                 </div>
             `;
