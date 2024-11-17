@@ -12,7 +12,6 @@
     <label for="method">Choose REST Method:</label>
     <select id="method">
         <option value="GET">GET</option>
-        <option value="PUT">PUT</option>
         <option value="DELETE">DELETE</option>
     </select>
     <br><br>
@@ -34,7 +33,7 @@
     <br><br>
 
     <!-- ID Input -->
-    <label for="id">Enter ID (for GET, PUT, DELETE):</label>
+    <label for="id">Enter ID (for GET and DELETE, leave empty for GET-ALL):</label>
     <input type="number" id="id" min="1">
     <br><br>
 
@@ -51,10 +50,29 @@
             const method = document.getElementById('method').value;
             const entity = document.getElementById('entity').value;
             const id = document.getElementById('id').value;
-            const url = `http://127.0.0.1:5000/${entity}/${id}`;
 
-            if (!id && (method === 'GET' || method === 'PUT' || method === 'DELETE')) {
-                document.getElementById('response').innerText = "Error: ID is required for the selected method.";
+            // Handle URL based on ID presence
+            let url = `http://127.0.0.1:5000/${entity}`;
+            if (id) {
+                url += `/${id}`;
+            }
+
+            // Handle GET method when ID is empty
+            if (method === 'GET' && !id) {
+                fetch(url, { method: 'GET' })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('response').innerText = JSON.stringify(data, null, 2);
+                    })
+                    .catch(error => {
+                        document.getElementById('response').innerText = `Error: ${error}`;
+                    });
+                return;
+            }
+
+            // Handle other methods
+            if (!id && (method === 'DELETE')) {
+                document.getElementById('response').innerText = "Error: ID is required for DELETE.";
                 return;
             }
 
@@ -63,10 +81,6 @@
                 headers: { 'Content-Type': 'application/json' }
             };
 
-            if (method === 'PUT') {
-                // Provide dummy data for PUT
-                options.body = JSON.stringify({ "key": "value" });
-            }
 
             fetch(url, options)
                 .then(response => response.json())
