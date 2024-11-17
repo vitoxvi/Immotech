@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Board Member Management</title>
+</head>
+<body>
+    <h1>Board Member Management</h1>
+
+    <!-- Create Board Member -->
+    <h2>Create Board Member</h2>
+    <form id="createBoardMemberForm">
+        <!-- Person Fields -->
+        <label for="firstName">First Name:</label>
+        <input type="text" id="firstName" name="firstName" required><br>
+
+        <label for="lastName">Last Name:</label>
+        <input type="text" id="lastName" name="lastName" required><br>
+
+        <label for="dateOfBirth">Date of Birth:</label>
+        <input type="date" id="dateOfBirth" name="dateOfBirth"><br>
+
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address"><br>
+
+        <label for="phoneNumber">Phone Number:</label>
+        <input type="text" id="phoneNumber" name="phoneNumber"><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email"><br>
+
+        <label for="bankCorrespondence">Bank Correspondence:</label>
+        <input type="text" id="bankCorrespondence" name="bankCorrespondence"><br>
+
+        <!-- Board Member Fields -->
+        <label for="role">Role:</label>
+        <input type="text" id="role" name="role" required><br>
+
+        <button type="submit">Create Board Member</button>
+    </form>
+    <div id="createBoardMemberResult"></div>
+
+    <hr>
+
+    <!-- View Board Members -->
+    <h2>View Board Members</h2>
+    <button id="viewBoardMembersButton">View All Board Members</button>
+    <div id="boardMemberList"></div>
+
+    <hr>
+
+    <!-- Update Board Member -->
+    <h2>Update Board Member</h2>
+    <form id="updateBoardMemberForm">
+        <label for="updateBoardMemberId">Board Member ID:</label>
+        <input type="number" id="updateBoardMemberId" name="updateBoardMemberId" min="1" required><br>
+
+        <label for="updateRole">Role:</label>
+        <input type="text" id="updateRole" name="updateRole" required><br>
+
+        <button type="submit">Update Board Member</button>
+    </form>
+    <div id="updateBoardMemberResult"></div>
+
+    <hr>
+
+    <!-- Delete Board Member -->
+    <h2>Delete Board Member</h2>
+    <form id="deleteBoardMemberForm">
+        <label for="deleteBoardMemberId">Board Member ID:</label>
+        <input type="number" id="deleteBoardMemberId" name="deleteBoardMemberId" min="1" required>
+        <button type="submit">Delete Board Member</button>
+    </form>
+    <div id="deleteBoardMemberResult"></div>
+
+    <script>
+        const BOARD_MEMBER_API = '/backend/board_members'; // Updated to use the backend prefix
+
+        // Create Board Member
+        document.getElementById('createBoardMemberForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                date_of_birth: document.getElementById('dateOfBirth').value || null,
+                address: document.getElementById('address').value || null,
+                phone_number: document.getElementById('phoneNumber').value || null,
+                email: document.getElementById('email').value || null,
+                bank_correspondence: document.getElementById('bankCorrespondence').value || null,
+                role: document.getElementById('role').value,
+            };
+
+            try {
+                const response = await fetch(BOARD_MEMBER_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json();
+                document.getElementById('createBoardMemberResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('createBoardMemberResult').innerText = `Error: ${error.message}`;
+            }
+        });
+
+        // View Board Members
+        document.getElementById('viewBoardMembersButton').addEventListener('click', async () => {
+            try {
+                const response = await fetch(BOARD_MEMBER_API);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const boardMemberListDiv = document.getElementById('boardMemberList');
+                boardMemberListDiv.innerHTML = ''; // Clear previous content
+                data.forEach(boardMember => {
+                    const boardMemberInfo = `
+                        <div>
+                            <strong>Board Member ID:</strong> ${boardMember.board_member_id}<br>
+                            <strong>Role:</strong> ${boardMember.role}<br>
+                            <strong>Name:</strong> ${boardMember.first_name} ${boardMember.last_name}<br>
+                            <strong>Date of Birth:</strong> ${boardMember.date_of_birth}<br>
+                            <strong>Address:</strong> ${boardMember.address}<br>
+                            <strong>Phone Number:</strong> ${boardMember.phone_number}<br>
+                            <strong>Email:</strong> ${boardMember.email}<br>
+                            <strong>Bank Correspondence:</strong> ${boardMember.bank_correspondence}<br>
+                            <hr>
+                        </div>
+                    `;
+                    boardMemberListDiv.innerHTML += boardMemberInfo;
+                });
+            } catch (error) {
+                document.getElementById('boardMemberList').innerText = `Error: ${error.message}`;
+            }
+        });
+
+        // Update Board Member
+        document.getElementById('updateBoardMemberForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const boardMemberId = document.getElementById('updateBoardMemberId').value;
+            const payload = {
+                role: document.getElementById('updateRole').value,
+            };
+
+            try {
+                const response = await fetch(`${BOARD_MEMBER_API}/${boardMemberId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json();
+                document.getElementById('updateBoardMemberResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('updateBoardMemberResult').innerText = `Error: ${error.message}`;
+            }
+        });
+
+        // Delete Board Member
+        document.getElementById('deleteBoardMemberForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const boardMemberId = document.getElementById('deleteBoardMemberId').value;
+
+            try {
+                const response = await fetch(`${BOARD_MEMBER_API}/${boardMemberId}`, {
+                    method: 'DELETE',
+                });
+                const data = await response.json();
+                document.getElementById('deleteBoardMemberResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('deleteBoardMemberResult').innerText = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

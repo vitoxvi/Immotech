@@ -6,8 +6,7 @@ employee_bp = Blueprint('employee', __name__)
 DATABASE = 'database.db'
 
 
-# Helper function to interact with the database
-def query_db(query, args=(), one=False, commit=False):
+def query_db(query, args=(), one=False, commit=False, return_last_id=False):
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row  # Fetch rows as dictionaries
     cursor = conn.cursor()
@@ -16,7 +15,10 @@ def query_db(query, args=(), one=False, commit=False):
         cursor.execute(query, args)
         if commit:
             conn.commit()
-            result = {"status": "success"}
+            if return_last_id:
+                result = {"id": cursor.lastrowid}
+            else:
+                result = {"status": "success"}
         else:
             result = cursor.fetchall()
     except sqlite3.Error as e:
@@ -26,32 +28,85 @@ def query_db(query, args=(), one=False, commit=False):
     return (result[0] if result else None) if one and not commit else result
 
 
-# CREATE a new employee
-@employee_bp.route('/employees', methods=['POST'])
+@employee_bp.route('/backend/employees', methods=['POST'])
 def create_employee():
     data = request.json
-    id = data.get('id')
+
+    # Person attributes
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    date_of_birth = data.get('date_of_birth')
+    address = data.get('address')
+    phone_number = data.get('phone_number')
+    email = data.get('email')
+    bank_correspondence = data.get('bank_correspondence')
+
+    # Employee attributes
     role = data.get('role')
     employment_rate = data.get('employment_rate')
 
-    if not id or not role or not employment_rate:
-        return jsonify({"error": "Employee ID, role, and employment rate are required"}), 400
+    # Validate required fields
+    if not all([first_name, last_name, role, employment_rate]):
+        return jsonify({"error": "Missing required fields"}), 400
 
-    query = """
+    # Step 1: Create Person
+    person_query = """
+    INSERT INTO Person (first_name, last_name, date_of_birth, address, phone_number, email, bank_correspondence)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    """
+    person_result = query_db(
+        person_query,
+        (first_name, last_name, date_of_birth, address, phone_number, email, bank_correspondence),
+        commit=True,
+        return_last_id=True  # Explicitly fetch last inserted ID
+    )
+
+    if "error" in person_result:
+        return jsonify(person_result), 500
+
+    person_id = person_result.get("id")
+    if not person_id:
+        return jsonify({"error": "Failed to create person, person ID not generated"}), 500
+
+    # Step 2: Create Employee linked to the Person
+    employee_query = """
     INSERT INTO Employee (id, role, employment_rate)
     VALUES (?, ?, ?)
     """
-    result = query_db(query, (id, role, employment_rate), commit=True)
-    if "error" in result:
-        return jsonify(result), 500
+    employee_result = query_db(
+        employee_query,
+        (person_id, role, employment_rate),
+        commit=True
+    )
 
-    return jsonify({"message": "Employee created successfully"}), 201
+    if "error" in employee_result:
+        return jsonify(employee_result), 500
+
+    return jsonify({
+        "message": "Employee and associated Person created successfully",
+        "person_id": person_id,
+        "employee_id": person_id  # Assuming Employee ID matches Person ID
+    }), 201
 
 
-# READ all employees
-@employee_bp.route('/employees', methods=['GET'])
+# READ all employees with person details
+@employee_bp.route('/backend/employees', methods=['GET'])
 def get_all_employees():
-    query = "SELECT * FROM Employee"
+    query = """
+    SELECT 
+        Employee.id AS employee_id, 
+        Employee.role, 
+        Employee.employment_rate, 
+        Person.first_name, 
+        Person.last_name, 
+        Person.date_of_birth, 
+        Person.address, 
+        Person.phone_number, 
+        Person.email, 
+        Person.bank_correspondence
+    FROM Employee
+    JOIN Person ON Employee.id = Person.id
+    """
     result = query_db(query)
     if "error" in result:
         return jsonify(result), 500
@@ -60,10 +115,27 @@ def get_all_employees():
     return jsonify(employees), 200
 
 
+
 # READ a single employee by ID
-@employee_bp.route('/employees/<int:employee_id>', methods=['GET'])
+# READ a single employee by ID with person details
+@employee_bp.route('/backend/employees/<int:employee_id>', methods=['GET'])
 def get_employee(employee_id):
-    query = "SELECT * FROM Employee WHERE id = ?"
+    query = """
+    SELECT 
+        Employee.id AS employee_id, 
+        Employee.role, 
+        Employee.employment_rate, 
+        Person.first_name, 
+        Person.last_name, 
+        Person.date_of_birth, 
+        Person.address, 
+        Person.phone_number, 
+        Person.email, 
+        Person.bank_correspondence
+    FROM Employee
+    JOIN Person ON Employee.id = Person.id
+    WHERE Employee.id = ?
+    """
     result = query_db(query, (employee_id,), one=True)
     if not result:
         return jsonify({"error": "Employee not found"}), 404
@@ -71,22 +143,43 @@ def get_employee(employee_id):
     return jsonify(dict(result)), 200
 
 
-# UPDATE an existing employee
-@employee_bp.route('/employees/<int:employee_id>', methods=['PUT'])
+# UPDATE an employee
+@employee_bp.route('/backend/employees/<int:employee_id>', methods=['PUT'])
 def update_employee(employee_id):
     data = request.json
+
+    # Optional fields for update
     role = data.get('role')
     employment_rate = data.get('employment_rate')
 
-    if not role or not employment_rate:
-        return jsonify({"error": "Role and employment rate are required"}), 400
+    # Check if at least one field is provided
+    if role is None and employment_rate is None:
+        return jsonify({"error": "At least one field (role or employment_rate) must be provided"}), 400
 
-    query = """
+    # Dynamically construct the update query
+    query_parts = []
+    query_values = []
+
+    if role is not None:
+        query_parts.append("role = ?")
+        query_values.append(role)
+
+    if employment_rate is not None:
+        query_parts.append("employment_rate = ?")
+        query_values.append(employment_rate)
+
+    # Add the employee ID to the query values
+    query_values.append(employee_id)
+
+    query = f"""
     UPDATE Employee
-    SET role = ?, employment_rate = ?, updated_at = CURRENT_TIMESTAMP
+    SET {', '.join(query_parts)}, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
     """
-    result = query_db(query, (role, employment_rate, employee_id), commit=True)
+    
+    # Execute the query
+    result = query_db(query, query_values, commit=True)
+
     if "error" in result:
         return jsonify(result), 500
 
@@ -94,7 +187,7 @@ def update_employee(employee_id):
 
 
 # DELETE an employee
-@employee_bp.route('/employees/<int:employee_id>', methods=['DELETE'])
+@employee_bp.route('/backend/employees/<int:employee_id>', methods=['DELETE'])
 def delete_employee(employee_id):
     query = "DELETE FROM Employee WHERE id = ?"
     result = query_db(query, (employee_id,), commit=True)

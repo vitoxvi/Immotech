@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Management</title>
+</head>
+<body>
+    <h1>Vehicle Management</h1>
+
+    <!-- Search Form -->
+    <h2>Search Vehicles</h2>
+    <form id="searchForm">
+        <label for="searchId">Vehicle ID (0 for all):</label>
+        <input type="number" id="searchId" name="searchId" min="0" required>
+        <button type="submit">Search</button>
+    </form>
+    <div id="searchResult"></div>
+
+    <hr>
+
+    <!-- Modify Vehicle -->
+    <h2>Modify Vehicle</h2>
+    <form id="modifyForm">
+        <label for="vehicleId">ID:</label>
+        <input type="number" id="vehicleId" name="vehicleId" min="0" required><br>
+
+        <label for="vehicleName">Name:</label>
+        <input type="text" id="vehicleName" name="vehicleName" required><br>
+
+        <label for="vehicleLicense">License Plate:</label>
+        <input type="text" id="vehicleLicense" name="vehicleLicense" required><br>
+
+        <label for="vehicleDocument">Document (Optional):</label>
+        <input type="text" id="vehicleDocument" name="vehicleDocument"><br>
+
+        <button type="submit">Modify</button>
+    </form>
+    <div id="modifyResult"></div>
+
+    <hr>
+
+    <!-- Delete Vehicle -->
+    <h2>Delete Vehicle</h2>
+    <form id="deleteForm">
+        <label for="deleteId">Vehicle ID:</label>
+        <input type="number" id="deleteId" name="deleteId" min="1" required>
+        <button type="submit">Delete</button>
+    </form>
+    <div id="deleteResult"></div>
+
+    <script>
+        const API_BASE = 'backend/vehicles';
+
+        // Search functionality
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const searchId = document.getElementById('searchId').value;
+            const url = searchId === '0' ? API_BASE : `${API_BASE}/${searchId}`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                document.getElementById('searchResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('searchResult').innerText = `Error: ${error}`;
+            }
+        });
+
+        // Modify functionality
+        document.getElementById('modifyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const vehicleId = document.getElementById('vehicleId').value;
+            const payload = {
+                name: document.getElementById('vehicleName').value,
+                license_plate: document.getElementById('vehicleLicense').value,
+                vehicle_document: document.getElementById('vehicleDocument').value || null,
+            };
+            try {
+                const response = await fetch(`${API_BASE}/${vehicleId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json();
+                document.getElementById('modifyResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('modifyResult').innerText = `Error: ${error}`;
+            }
+        });
+
+        // Delete functionality
+        document.getElementById('deleteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const deleteId = document.getElementById('deleteId').value;
+            try {
+                const response = await fetch(`${API_BASE}/${deleteId}`, { method: 'DELETE' });
+                const data = await response.json();
+                document.getElementById('deleteResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('deleteResult').innerText = `Error: ${error}`;
+            }
+        });
+    </script>
+</body>
+</html>

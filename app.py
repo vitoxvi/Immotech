@@ -14,8 +14,22 @@ from entities.vehicles import vehicle_bp
 app = Flask(__name__)
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/vehicles')
+def vehicles():
+    return render_template('vehicle.html')
+
+@app.route('/employees')
+def employees():
+    return render_template('employee.html')
+
+@app.route('/boardmembers')
+def boardmembers():
+    return render_template('board_member.html')
+
+
 
 # Register Blueprints
 app.register_blueprint(property_bp)

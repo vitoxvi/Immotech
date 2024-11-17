@@ -27,7 +27,7 @@ def query_db(query, args=(), one=False, commit=False):
 
 
 # CREATE a new vehicle
-@vehicle_bp.route('/vehicles', methods=['POST'])
+@vehicle_bp.route('/backend/vehicles', methods=['POST'])
 def create_vehicle():
     data = request.json
     name = data.get('name')
@@ -49,7 +49,7 @@ def create_vehicle():
 
 
 # READ all vehicles
-@vehicle_bp.route('/vehicles', methods=['GET'])
+@vehicle_bp.route('/backend/vehicles', methods=['GET'])
 def get_all_vehicles():
     query = "SELECT * FROM Vehicle"
     result = query_db(query)
@@ -61,7 +61,7 @@ def get_all_vehicles():
 
 
 # READ a single vehicle by ID
-@vehicle_bp.route('/vehicles/<int:vehicle_id>', methods=['GET'])
+@vehicle_bp.route('/backend/vehicles/<int:vehicle_id>', methods=['GET'])
 def get_vehicle(vehicle_id):
     query = "SELECT * FROM Vehicle WHERE id = ?"
     result = query_db(query, (vehicle_id,), one=True)
@@ -72,7 +72,7 @@ def get_vehicle(vehicle_id):
 
 
 # UPDATE an existing vehicle
-@vehicle_bp.route('/vehicles/<int:vehicle_id>', methods=['PUT'])
+@vehicle_bp.route('/backend/vehicles/<int:vehicle_id>', methods=['PUT'])
 def update_vehicle(vehicle_id):
     data = request.json
     name = data.get('name')
@@ -95,7 +95,7 @@ def update_vehicle(vehicle_id):
 
 
 # DELETE a vehicle
-@vehicle_bp.route('/vehicles/<int:vehicle_id>', methods=['DELETE'])
+@vehicle_bp.route('/backend/vehicles/<int:vehicle_id>', methods=['DELETE'])
 def delete_vehicle(vehicle_id):
     query = "DELETE FROM Vehicle WHERE id = ?"
     result = query_db(query, (vehicle_id,), commit=True)

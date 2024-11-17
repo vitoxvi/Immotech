@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee CRUD Operations</title>
+</head>
+<body>
+    <h1>Employee Management</h1>
+
+    <!-- Create Employee -->
+    <h2>Create Employee</h2>
+    <form id="createEmployeeForm">
+        <!-- Person Fields -->
+        <label for="firstName">First Name:</label>
+        <input type="text" id="firstName" name="firstName" required><br>
+
+        <label for="lastName">Last Name:</label>
+        <input type="text" id="lastName" name="lastName" required><br>
+
+        <label for="dateOfBirth">Date of Birth:</label>
+        <input type="date" id="dateOfBirth" name="dateOfBirth"><br>
+
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address"><br>
+
+        <label for="phoneNumber">Phone Number:</label>
+        <input type="text" id="phoneNumber" name="phoneNumber"><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email"><br>
+
+        <label for="bankCorrespondence">Bank Correspondence:</label>
+        <input type="text" id="bankCorrespondence" name="bankCorrespondence"><br>
+
+        <!-- Employee Fields -->
+        <label for="role">Role:</label>
+        <input type="text" id="role" name="role" required><br>
+
+        <label for="employmentRate">Employment Rate (%):</label>
+        <input type="number" id="employmentRate" name="employmentRate" min="1" max="100" required><br>
+
+        <button type="submit">Create Employee</button>
+    </form>
+    <div id="createEmployeeResult"></div>
+
+    <hr>
+
+    <!-- Read Employees -->
+    <h2>View Employees</h2>
+    <button id="viewEmployeesButton">View All Employees</button>
+    <div id="employeeList"></div>
+
+    <hr>
+
+    <!-- Update Employee -->
+    <h2>Update Employee</h2>
+    <form id="updateEmployeeForm">
+        <label for="updateEmployeeId">Employee ID:</label>
+        <input type="number" id="updateEmployeeId" name="updateEmployeeId" min="1" required><br>
+
+        <label for="updateRole">Role:</label>
+        <input type="text" id="updateRole" name="updateRole" ><br>
+
+        <label for="updateEmploymentRate">Employment Rate (%):</label>
+        <input type="number" id="updateEmploymentRate" name="updateEmploymentRate" min="1" max="100"><br>
+
+        <button type="submit">Update Employee</button>
+    </form>
+    <div id="updateEmployeeResult"></div>
+
+    <hr>
+
+    <!-- Delete Employee -->
+    <h2>Delete Employee</h2>
+    <form id="deleteEmployeeForm">
+        <label for="deleteEmployeeId">Employee ID:</label>
+        <input type="number" id="deleteEmployeeId" name="deleteEmployeeId" min="1" required>
+        <button type="submit">Delete Employee</button>
+    </form>
+    <div id="deleteEmployeeResult"></div>
+
+    <script>
+        const EMPLOYEE_API = 'backend/employees';
+
+        // Create Employee
+        document.getElementById('createEmployeeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                date_of_birth: document.getElementById('dateOfBirth').value || null,
+                address: document.getElementById('address').value || null,
+                phone_number: document.getElementById('phoneNumber').value || null,
+                email: document.getElementById('email').value || null,
+                bank_correspondence: document.getElementById('bankCorrespondence').value || null,
+                role: document.getElementById('role').value,
+                employment_rate: document.getElementById('employmentRate').value,
+            };
+
+            try {
+                const response = await fetch(EMPLOYEE_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json();
+                document.getElementById('createEmployeeResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('createEmployeeResult').innerText = `Error: ${error}`;
+            }
+        });
+
+        // View Employees
+        document.getElementById('viewEmployeesButton').addEventListener('click', async () => {
+            try {
+                const response = await fetch(EMPLOYEE_API);
+                const data = await response.json();
+                document.getElementById('employeeList').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('employeeList').innerText = `Error: ${error}`;
+            }
+        });
+
+        // Update Employee
+        document.getElementById('updateEmployeeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const employeeId = document.getElementById('updateEmployeeId').value;
+            const payload = {
+                role: document.getElementById('updateRole').value,
+                employment_rate: document.getElementById('updateEmploymentRate').value,
+            };
+
+            try {
+                const response = await fetch(`${EMPLOYEE_API}/${employeeId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json();
+                document.getElementById('updateEmployeeResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('updateEmployeeResult').innerText = `Error: ${error}`;
+            }
+        });
+
+        // Delete Employee
+        document.getElementById('deleteEmployeeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const employeeId = document.getElementById('deleteEmployeeId').value;
+
+            try {
+                const response = await fetch(`${EMPLOYEE_API}/${employeeId}`, {
+                    method: 'DELETE',
+                });
+                const data = await response.json();
+                document.getElementById('deleteEmployeeResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('deleteEmployeeResult').innerText = `Error: ${error}`;
+            }
+        });
+    </script>
+</body>
+</html>
