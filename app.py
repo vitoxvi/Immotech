@@ -29,6 +29,9 @@ def employees():
 def boardmembers():
     return render_template('board_member.html')
 
+@app.route('/vehicle-usage-logs')
+def vehicle_usage_logs():
+    return render_template('vehicle_usage_log.html')
 
 
 # Register Blueprints

@@ -27,7 +27,7 @@ def query_db(query, args=(), one=False, commit=False):
 
 
 # CREATE a new vehicle usage log
-@vehicle_usage_log_bp.route('/vehicle_usage_logs', methods=['POST'])
+@vehicle_usage_log_bp.route('/backend/vehicle_usage_log', methods=['POST'])
 def create_vehicle_usage_log():
     data = request.json
     vehicle_id = data.get('vehicle_id')
@@ -50,10 +50,22 @@ def create_vehicle_usage_log():
     return jsonify({"message": "Vehicle usage log created successfully"}), 201
 
 
-# READ all vehicle usage logs
-@vehicle_usage_log_bp.route('/vehicle_usage_logs', methods=['GET'])
+# READ all vehicle usage logs (join with Person table)
+@vehicle_usage_log_bp.route('/backend/vehicle_usage_log', methods=['GET'])
 def get_all_vehicle_usage_logs():
-    query = "SELECT * FROM VehicleUsageLog"
+    query = """
+    SELECT 
+        VehicleUsageLog.id AS log_id,
+        VehicleUsageLog.vehicle_id,
+        VehicleUsageLog.employee_id,
+        VehicleUsageLog.date_of_usage,
+        VehicleUsageLog.purpose,
+        VehicleUsageLog.distance_travelled,
+        Person.first_name || ' ' || Person.last_name AS employee_name
+    FROM VehicleUsageLog
+    JOIN Employee ON VehicleUsageLog.employee_id = Employee.id
+    JOIN Person ON Employee.id = Person.id
+    """
     result = query_db(query)
     if "error" in result:
         return jsonify(result), 500
@@ -62,44 +74,8 @@ def get_all_vehicle_usage_logs():
     return jsonify(vehicle_usage_logs), 200
 
 
-# READ a single vehicle usage log by ID
-@vehicle_usage_log_bp.route('/vehicle_usage_logs/<int:log_id>', methods=['GET'])
-def get_vehicle_usage_log(log_id):
-    query = "SELECT * FROM VehicleUsageLog WHERE id = ?"
-    result = query_db(query, (log_id,), one=True)
-    if not result:
-        return jsonify({"error": "Vehicle usage log not found"}), 404
-
-    return jsonify(dict(result)), 200
-
-
-# UPDATE an existing vehicle usage log
-@vehicle_usage_log_bp.route('/vehicle_usage_logs/<int:log_id>', methods=['PUT'])
-def update_vehicle_usage_log(log_id):
-    data = request.json
-    vehicle_id = data.get('vehicle_id')
-    employee_id = data.get('employee_id')
-    date_of_usage = data.get('date_of_usage')
-    purpose = data.get('purpose')
-    distance_travelled = data.get('distance_travelled')
-
-    if not all([vehicle_id, employee_id, date_of_usage]):
-        return jsonify({"error": "Vehicle ID, employee ID, and date of usage are required"}), 400
-
-    query = """
-    UPDATE VehicleUsageLog
-    SET vehicle_id = ?, employee_id = ?, date_of_usage = ?, purpose = ?, distance_travelled = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-    """
-    result = query_db(query, (vehicle_id, employee_id, date_of_usage, purpose, distance_travelled, log_id), commit=True)
-    if "error" in result:
-        return jsonify(result), 500
-
-    return jsonify({"message": "Vehicle usage log updated successfully"}), 200
-
-
 # DELETE a vehicle usage log
-@vehicle_usage_log_bp.route('/vehicle_usage_logs/<int:log_id>', methods=['DELETE'])
+@vehicle_usage_log_bp.route('/backend/vehicle_usage_log/<int:log_id>', methods=['DELETE'])
 def delete_vehicle_usage_log(log_id):
     query = "DELETE FROM VehicleUsageLog WHERE id = ?"
     result = query_db(query, (log_id,), commit=True)

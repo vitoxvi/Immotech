@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Usage Logs Management</title>
+</head>
+<body>
+    <h1>Vehicle Usage Logs Management</h1>
+
+    <!-- Create Vehicle Usage Log -->
+    <h2>Create Vehicle Usage Log</h2>
+    <form id="createVehicleUsageLogForm">
+        <label for="vehicleId">Vehicle ID:</label>
+        <input type="number" id="vehicleId" name="vehicleId" required><br>
+
+        <label for="employeeId">Employee ID:</label>
+        <input type="number" id="employeeId" name="employeeId" required><br>
+
+        <label for="dateOfUsage">Date of Usage:</label>
+        <input type="date" id="dateOfUsage" name="dateOfUsage" required><br>
+
+        <label for="purpose">Purpose:</label>
+        <input type="text" id="purpose" name="purpose" placeholder="e.g., Business Trip"><br>
+
+        <label for="distanceTravelled">Distance Travelled (km):</label>
+        <input type="number" id="distanceTravelled" name="distanceTravelled" min="0" placeholder="e.g., 150"><br>
+
+        <button type="submit">Create Log</button>
+    </form>
+    <div id="createLogResult"></div>
+
+    <hr>
+
+    <!-- View All Vehicle Usage Logs -->
+    <h2>View All Vehicle Usage Logs</h2>
+    <button id="viewLogsButton">View Logs</button>
+    <div id="logsList"></div>
+
+    <hr>
+
+    <!-- Delete Vehicle Usage Log -->
+    <h2>Delete Vehicle Usage Log</h2>
+    <form id="deleteVehicleUsageLogForm">
+        <label for="deleteLogId">Log ID:</label>
+        <input type="number" id="deleteLogId" name="deleteLogId" required>
+        <button type="submit">Delete Log</button>
+    </form>
+    <div id="deleteLogResult"></div>
+
+    <script>
+        const VEHICLE_USAGE_LOG_API = '/backend/vehicle_usage_log';
+
+        // Create Vehicle Usage Log
+        document.getElementById('createVehicleUsageLogForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                vehicle_id: document.getElementById('vehicleId').value,
+                employee_id: document.getElementById('employeeId').value,
+                date_of_usage: document.getElementById('dateOfUsage').value,
+                purpose: document.getElementById('purpose').value || "Other",
+                distance_travelled: document.getElementById('distanceTravelled').value || 0
+            };
+
+            try {
+                const response = await fetch(VEHICLE_USAGE_LOG_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json();
+                document.getElementById('createLogResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('createLogResult').innerText = `Error: ${error.message}`;
+            }
+        });
+
+        // View All Vehicle Usage Logs
+        document.getElementById('viewLogsButton').addEventListener('click', async () => {
+            try {
+                const response = await fetch(VEHICLE_USAGE_LOG_API);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const logsListDiv = document.getElementById('logsList');
+                logsListDiv.innerHTML = ''; // Clear previous content
+                data.forEach(log => {
+                    const logInfo = `
+                        <div>
+                            <strong>Log ID:</strong> ${log.log_id}<br>
+                            <strong>Vehicle ID:</strong> ${log.vehicle_id}<br>
+                            <strong>Employee ID:</strong> ${log.employee_id}<br>
+                            <strong>Employee Name:</strong> ${log.employee_name}<br>
+                            <strong>Date of Usage:</strong> ${log.date_of_usage}<br>
+                            <strong>Purpose:</strong> ${log.purpose}<br>
+                            <strong>Distance Travelled:</strong> ${log.distance_travelled} km<br>
+                            <hr>
+                        </div>
+                    `;
+                    logsListDiv.innerHTML += logInfo;
+                });
+            } catch (error) {
+                document.getElementById('logsList').innerText = `Error: ${error.message}`;
+            }
+        });
+
+        // Delete Vehicle Usage Log
+        document.getElementById('deleteVehicleUsageLogForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const logId = document.getElementById('deleteLogId').value;
+
+            try {
+                const response = await fetch(`${VEHICLE_USAGE_LOG_API}/${logId}`, {
+                    method: 'DELETE',
+                });
+                const data = await response.json();
+                document.getElementById('deleteLogResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('deleteLogResult').innerText = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
