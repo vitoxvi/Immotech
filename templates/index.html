@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple REST Client</title>
+</head>
+<body>
+    <h1>Simple REST Client</h1>
+
+    <!-- REST Method Selector -->
+    <label for="method">Choose REST Method:</label>
+    <select id="method">
+        <option value="GET">GET</option>
+        <option value="PUT">PUT</option>
+        <option value="DELETE">DELETE</option>
+    </select>
+    <br><br>
+
+    <!-- Entity Selector -->
+    <label for="entity">Choose Entity:</label>
+    <select id="entity">
+        <option value="properties">Property</option>
+        <option value="apartments">Apartment</option>
+        <option value="parking_spots">Parking Spot</option>
+        <option value="contracts">Contract</option>
+        <option value="persons">Person</option>
+        <option value="tenants">Tenant</option>
+        <option value="board_members">Board Member</option>
+        <option value="employees">Employee</option>
+        <option value="vehicle_usage_logs">Vehicle Usage Log</option>
+        <option value="vehicles">Vehicle</option>
+    </select>
+    <br><br>
+
+    <!-- ID Input -->
+    <label for="id">Enter ID (for GET, PUT, DELETE):</label>
+    <input type="number" id="id" min="1">
+    <br><br>
+
+    <!-- Execute Button -->
+    <button id="execute">Execute</button>
+    <br><br>
+
+    <!-- Output -->
+    <h2>Response:</h2>
+    <pre id="response"></pre>
+
+    <script>
+        document.getElementById('execute').addEventListener('click', () => {
+            const method = document.getElementById('method').value;
+            const entity = document.getElementById('entity').value;
+            const id = document.getElementById('id').value;
+            const url = `http://127.0.0.1:5000/${entity}/${id}`;
+
+            if (!id && (method === 'GET' || method === 'PUT' || method === 'DELETE')) {
+                document.getElementById('response').innerText = "Error: ID is required for the selected method.";
+                return;
+            }
+
+            let options = {
+                method: method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+
+            if (method === 'PUT') {
+                // Provide dummy data for PUT
+                options.body = JSON.stringify({ "key": "value" });
+            }
+
+            fetch(url, options)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('response').innerText = JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    document.getElementById('response').innerText = `Error: ${error}`;
+                });
+        });
+    </script>
+</body>
+</html>
