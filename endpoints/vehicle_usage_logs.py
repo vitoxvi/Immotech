@@ -51,8 +51,9 @@ def create_vehicle_usage_log():
 
 
 # READ all vehicle usage logs (join with Person table)
-@vehicle_usage_log_bp.route('/backend/vehicle_usage_log', methods=['GET'])
-def get_all_vehicle_usage_logs():
+@vehicle_usage_log_bp.route('/backend/vehicle_usage_log/<int:is_deleted>', methods=['GET'])
+def get_all_vehicle_usage_logs(is_deleted):
+    print(f"is_deleted received: {is_deleted}")
     query = """
     SELECT 
         VehicleUsageLog.id AS log_id,
@@ -61,25 +62,35 @@ def get_all_vehicle_usage_logs():
         VehicleUsageLog.date_of_usage,
         VehicleUsageLog.purpose,
         VehicleUsageLog.distance_travelled,
+        VehicleUsageLog.is_deleted,
         Person.first_name || ' ' || Person.last_name AS employee_name
     FROM VehicleUsageLog
     JOIN Employee ON VehicleUsageLog.employee_id = Employee.id
     JOIN Person ON Employee.id = Person.id
+    WHERE (VehicleUsageLog.is_deleted = ? OR ? = 2)
     """
-    result = query_db(query)
-    if "error" in result:
-        return jsonify(result), 500
+    try:
+        result = query_db(query, (is_deleted, is_deleted))
+        print(result)
+        if "error" in result:
+            return jsonify(result), 500
 
-    vehicle_usage_logs = [dict(row) for row in result]
-    return jsonify(vehicle_usage_logs), 200
+        vehicle_usage_logs = [dict(row) for row in result]
+        return jsonify(vehicle_usage_logs), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # DELETE a vehicle usage log
 @vehicle_usage_log_bp.route('/backend/vehicle_usage_log/<int:log_id>', methods=['DELETE'])
 def delete_vehicle_usage_log(log_id):
-    query = "DELETE FROM VehicleUsageLog WHERE id = ?"
+    query = query = """
+    UPDATE VehicleUsageLog
+    SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+    """
     result = query_db(query, (log_id,), commit=True)
     if "error" in result:
         return jsonify(result), 500
 
-    return jsonify({"message": "Vehicle usage log deleted successfully"}), 200
+    return jsonify({"message": "Vehicle usage log soft-deleted successfully"}), 200

@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS VehicleUsageLog (
     date_of_usage TEXT NOT NULL,
     purpose TEXT DEFAULT 'Other' CHECK (purpose IN ('Delivery', 'Repair', 'Inspection', 'Private', 'Other')),
     distance_travelled REAL CHECK (distance_travelled >= 0),
+    is_deleted INTEGER DEFAULT 0 CHECK (is_deleted IN (0, 1)),
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (vehicle_id) REFERENCES Vehicle (id) ON DELETE CASCADE,
@@ -217,8 +218,25 @@ def setup_database():
     connection = sqlite3.connect(DATABASE_NAME)
     cursor = connection.cursor()
 
-    try:
-        # Execute the schema
+    try:       
+        # Drop all existing tables
+        cursor.executescript("""
+        PRAGMA foreign_keys = OFF;
+        DROP TABLE IF EXISTS VehicleUsageLog;
+        DROP TABLE IF EXISTS Vehicle;
+        DROP TABLE IF EXISTS Employee;
+        DROP TABLE IF EXISTS Person;
+        DROP TABLE IF EXISTS Tenant;
+        DROP TABLE IF EXISTS BoardMember;
+        DROP TABLE IF EXISTS Property;
+        DROP TABLE IF EXISTS Apartment;
+        DROP TABLE IF EXISTS ParkingSpot;
+        DROP TABLE IF EXISTS Contract;
+        PRAGMA foreign_keys = ON;
+        """)
+        print("All existing tables dropped successfully.")
+
+        # Execute the schema to recreate the tables
         cursor.executescript(SQL_SCHEMA)
         print(f"Database setup completed successfully: {DATABASE_NAME}")
     except sqlite3.Error as e:

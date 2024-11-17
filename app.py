@@ -1,14 +1,14 @@
 from flask import Flask, render_template
-from entities.properties import property_bp
-from entities.apartments import apartment_bp
-from entities.parking_spots import parking_spot_bp
-from entities.contracts import contract_bp
-from entities.persons import person_bp
-from entities.tenants import tenant_bp
-from entities.board_members import board_member_bp
-from entities.employees import employee_bp
-from entities.vehicle_usage_logs import vehicle_usage_log_bp
-from entities.vehicles import vehicle_bp
+from endpoints.properties import property_bp
+from endpoints.apartments import apartment_bp
+from endpoints.parking_spots import parking_spot_bp
+from endpoints.contracts import contract_bp
+from endpoints.persons import person_bp
+from endpoints.tenants import tenant_bp
+from endpoints.board_members import board_member_bp
+from endpoints.employees import employee_bp
+from endpoints.vehicle_usage_logs import vehicle_usage_log_bp
+from endpoints.vehicles import vehicle_bp
 
 
 app = Flask(__name__)
