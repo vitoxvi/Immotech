@@ -24,6 +24,12 @@ def populate_database():
         (2, 'Technician', 80),
         (3, 'Cleaner', 60);
 
+        -- Insert sample data into Unit table
+        INSERT INTO Unit (name, address, property_id)
+        VALUES
+        ('Unit A', 'Bahnhofstrasse 1, 8001 Zürich', 1),
+        ('Unit B', 'Seestrasse 100, 8700 Küsnacht', 2);
+
         -- Insert sample data into Tenant table
         INSERT INTO Tenant (id, is_coroperative_member, apartment_id, parking_id)
         VALUES 
@@ -55,10 +61,10 @@ def populate_database():
         ('Lakeside Apartments', 'Seestrasse 100, 8700 Küsnacht');
 
         -- Insert sample data into Apartment table
-        INSERT INTO Apartment (size_sqm, rent, rooms, address, unit_number, property_id)
+        INSERT INTO Apartment (size_sqm, rent, rooms, designation, unit_number, unit_id)
         VALUES 
-        ('85', 2200, 3, 'Bahnhofstrasse 1, 8001 Zürich', '1A', 1),
-        ('120', 3500, 4, 'Seestrasse 100, 8700 Küsnacht', '2B', 2);
+        ('85', 2200, 3, 'Premium', '1A', 1),
+        ('120', 3500, 4, 'Luxury', '2B', 2);
 
         -- Insert sample data into ParkingSpot table
         INSERT INTO ParkingSpot (rent, spot_number, type, property_id)
