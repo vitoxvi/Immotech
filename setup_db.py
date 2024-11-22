@@ -93,22 +93,36 @@ CREATE TABLE IF NOT EXISTS Property (
 
 CREATE INDEX IF NOT EXISTS idx_address ON Property (address);
 
-CREATE TABLE IF NOT EXISTS Apartment (
+
+CREATE TABLE IF NOT EXISTS Unit (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    size_sqm TEXT NOT NULL,
-    rent REAL NOT NULL CHECK (rent >= 0),
-    rooms INTEGER CHECK (rooms >= 0),
-    address TEXT NOT NULL,
-    unit_number TEXT NOT NULL,
+    name TEXT,
+    address TEXT,
     property_id INTEGER NOT NULL,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (property_id) REFERENCES Property (id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_property_id ON Apartment (property_id);
+CREATE INDEX IF NOT EXISTS idx_property_id ON Unit (property_id);
+
+CREATE TABLE IF NOT EXISTS Apartment (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    size_sqm TEXT NOT NULL,
+    rent REAL NOT NULL CHECK (rent >= 0),
+    rooms INTEGER CHECK (rooms >= 0),
+    designation TEXT,
+    unit_number TEXT NOT NULL,
+    unit_id INTEGER,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (unit_id) REFERENCES Unit (id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_unit_id ON Apartment (unit_id);
 CREATE INDEX IF NOT EXISTS idx_rent ON Apartment (rent);
 CREATE INDEX IF NOT EXISTS idx_rooms ON Apartment (rooms);
+
 
 CREATE TABLE IF NOT EXISTS ParkingSpot (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

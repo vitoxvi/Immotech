@@ -4,6 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contract Management</title>
+    <script>
+        // Function to toggle visibility of fields based on rental type
+        function toggleRentalFields() {
+            const rentalType = document.getElementById('rentalType').value;
+            const apartmentFields = document.getElementById('apartmentFields');
+            const parkingFields = document.getElementById('parkingFields');
+
+            if (rentalType === 'Apartment') {
+                apartmentFields.style.display = 'block';
+                parkingFields.style.display = 'none';
+            } else if (rentalType === 'ParkingSpot') {
+                apartmentFields.style.display = 'none';
+                parkingFields.style.display = 'block';
+            } else {
+                apartmentFields.style.display = 'none';
+                parkingFields.style.display = 'none';
+            }
+        }
+    </script>
 </head>
 <body>
     <h1>Contract Management</h1>
@@ -21,19 +40,32 @@
             <option value="0" selected>No</option>
         </select><br>
 
-        <label for="apartmentId">Apartment ID:</label>
-        <input type="number" id="apartmentId" name="apartmentId" min="1" placeholder="Apartment ID"><br>
-
-        <label for="parkingId">Parking Spot ID:</label>
-        <input type="number" id="parkingId" name="parkingId" min="1" placeholder="Parking Spot ID"><br>
-
-        <h3>Contract Details</h3>
+        <h3>Rental Type</h3>
         <label for="rentalType">Rental Type:</label>
-        <select id="rentalType" name="rentalType">
+        <select id="rentalType" name="rentalType" onchange="toggleRentalFields()">
+            <option value="" selected disabled>Select Rental Type</option>
             <option value="Apartment">Apartment</option>
             <option value="ParkingSpot">Parking Spot</option>
         </select><br>
 
+        <!-- Apartment-Specific Fields -->
+        <div id="apartmentFields" style="display: none;">
+            <h3>Apartment Details</h3>
+            <label for="apartmentId">Apartment ID:</label>
+            <input type="number" id="apartmentId" name="apartmentId" min="1" placeholder="Apartment ID"><br>
+
+            <label for="unitId">Unit ID (Optional):</label>
+            <input type="number" id="unitId" name="unitId" min="1" placeholder="Unit ID"><br>
+        </div>
+
+        <!-- Parking Spot-Specific Fields -->
+        <div id="parkingFields" style="display: none;">
+            <h3>Parking Spot Details</h3>
+            <label for="parkingId">Parking Spot ID:</label>
+            <input type="number" id="parkingId" name="parkingId" min="1" placeholder="Parking Spot ID"><br>
+        </div>
+
+        <h3>Contract Details</h3>
         <label for="rentalId">Rental ID:</label>
         <input type="number" id="rentalId" name="rentalId" min="1" required><br>
 
@@ -54,17 +86,23 @@
         document.getElementById('createContractForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Gather form data
+            const rentalType = document.getElementById('rentalType').value;
             const payload = {
                 tenant_id: document.getElementById('tenantId').value || null,
                 is_cooperative_member: document.getElementById('isCooperativeMember').value,
-                apartment_id: document.getElementById('apartmentId').value || null,
-                parking_id: document.getElementById('parkingId').value || null,
-                rental_type: document.getElementById('rentalType').value,
+                rental_type: rentalType,
                 rental_id: document.getElementById('rentalId').value,
                 start_date: document.getElementById('startDate').value,
-                end_date: document.getElementById('endDate').value || null
+                end_date: document.getElementById('endDate').value || null,
             };
+
+            // Add apartment or parking spot fields based on rental type
+            if (rentalType === 'Apartment') {
+                payload.apartment_id = document.getElementById('apartmentId').value || null;
+                payload.unit_id = document.getElementById('unitId').value || null;
+            } else if (rentalType === 'ParkingSpot') {
+                payload.parking_id = document.getElementById('parkingId').value || null;
+            }
 
             try {
                 const response = await fetch(CONTRACT_API, {

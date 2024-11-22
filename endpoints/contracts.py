@@ -26,7 +26,6 @@ def query_db(query, args=(), one=False, commit=False):
     return (result[0] if result else None) if one and not commit else result
 
 
-# CREATE a new contract
 @contract_bp.route('/backend/contracts', methods=['POST'])
 def create_contract():
     data = request.json
@@ -34,14 +33,17 @@ def create_contract():
     # Tenant details
     tenant_id = data.get('tenant_id')
     is_cooperative_member = data.get('is_cooperative_member')
-    apartment_id = data.get('apartment_id')
-    parking_id = data.get('parking_id')
 
-    # Contract details
+    # Rental details
     rental_type = data.get('rental_type')
     rental_id = data.get('rental_id')
     start_date = data.get('start_date')
     end_date = data.get('end_date')
+
+    # Optional details
+    apartment_id = data.get('apartment_id')  # Only for Apartment rental type
+    parking_id = data.get('parking_id')      # Only for ParkingSpot rental type
+    unit_id = data.get('unit_id')            # Only for Apartment rentals
 
     if not all([rental_type, rental_id, start_date]):
         return jsonify({"error": "Rental type, rental ID, and start date are required"}), 400
@@ -55,7 +57,8 @@ def create_contract():
             """
             tenant_result = query_db(
                 tenant_query,
-                (is_cooperative_member, apartment_id, parking_id),
+                (is_cooperative_member, apartment_id if rental_type == "Apartment" else None, 
+                 parking_id if rental_type == "ParkingSpot" else None),
                 commit=True
             )
             if "error" in tenant_result:
@@ -65,6 +68,31 @@ def create_contract():
             tenant_id_query = "SELECT last_insert_rowid() AS tenant_id"
             tenant_id_result = query_db(tenant_id_query, one=True)
             tenant_id = tenant_id_result['tenant_id']
+
+        # Validate rental type and associated IDs
+        if rental_type == "Apartment":
+            if not apartment_id:
+                return jsonify({"error": "Apartment ID is required for Apartment rental type"}), 400
+
+            apartment_check_query = "SELECT id FROM Apartment WHERE id = ?"
+            apartment_exists = query_db(apartment_check_query, (apartment_id,), one=True)
+            if not apartment_exists:
+                return jsonify({"error": f"Apartment ID {apartment_id} does not exist"}), 400
+
+            if unit_id:
+                unit_check_query = "SELECT id FROM Unit WHERE id = ?"
+                unit_exists = query_db(unit_check_query, (unit_id,), one=True)
+                if not unit_exists:
+                    return jsonify({"error": f"Unit ID {unit_id} does not exist"}), 400
+
+        elif rental_type == "ParkingSpot":
+            if not parking_id:
+                return jsonify({"error": "Parking Spot ID is required for ParkingSpot rental type"}), 400
+
+            parking_check_query = "SELECT id FROM ParkingSpot WHERE id = ?"
+            parking_exists = query_db(parking_check_query, (parking_id,), one=True)
+            if not parking_exists:
+                return jsonify({"error": f"Parking Spot ID {parking_id} does not exist"}), 400
 
         # Create the contract
         contract_query = """
@@ -83,6 +111,7 @@ def create_contract():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 
