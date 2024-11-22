@@ -99,7 +99,7 @@ def update_contract(contract_id):
 
 
 # Soft DELETE a contract
-@contract_bp.route('backend/contracts/<int:contract_id>', methods=['DELETE'])
+@contract_bp.route('/backend/contracts/<int:contract_id>', methods=['DELETE'])
 def soft_delete_contract(contract_id):
     query = """
     UPDATE Contract

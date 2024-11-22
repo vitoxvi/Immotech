@@ -33,6 +33,10 @@ def boardmembers():
 def vehicle_usage_logs():
     return render_template('vehicle_usage_log.html')
 
+@app.route('/contracts')
+def contracts():
+    return render_template('contract.html')
+
 
 # Register Blueprints
 app.register_blueprint(property_bp)
@@ -45,6 +49,7 @@ app.register_blueprint(board_member_bp)
 app.register_blueprint(employee_bp)
 app.register_blueprint(vehicle_usage_log_bp)
 app.register_blueprint(vehicle_bp)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
