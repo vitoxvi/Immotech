@@ -98,12 +98,16 @@ def update_contract(contract_id):
     return jsonify({"message": "Contract updated successfully"}), 200
 
 
-# DELETE a contract
-@contract_bp.route('/contracts/<int:contract_id>', methods=['DELETE'])
-def delete_contract(contract_id):
-    query = "DELETE FROM Contract WHERE id = ?"
+# Soft DELETE a contract
+@contract_bp.route('backend/contracts/<int:contract_id>', methods=['DELETE'])
+def soft_delete_contract(contract_id):
+    query = """
+    UPDATE Contract
+    SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+    """
     result = query_db(query, (contract_id,), commit=True)
     if "error" in result:
         return jsonify(result), 500
 
-    return jsonify({"message": "Contract deleted successfully"}), 200
+    return jsonify({"message": "Contract soft-deleted successfully"}), 200

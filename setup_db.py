@@ -131,10 +131,12 @@ CREATE TABLE IF NOT EXISTS Contract (
     rental_id INTEGER NOT NULL,
     start_date TEXT NOT NULL,
     end_date TEXT CHECK (end_date >= start_date),
+    is_deleted INTEGER DEFAULT 0 CHECK (is_deleted IN (0, 1)),
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (tenant_id) REFERENCES Tenant (id) ON DELETE CASCADE
 );
+
 
 CREATE INDEX IF NOT EXISTS idx_tenant_id ON Contract (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_rental_id ON Contract (rental_id);
