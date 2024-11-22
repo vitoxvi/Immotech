@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Management</title>
+</head>
+<body>
+    <h1>Contract Management</h1>
+
+    <!-- Create Contract -->
+    <h2>Create New Contract</h2>
+    <form id="createContractForm">
+        <h3>Tenant Details</h3>
+        <label for="tenantId">Tenant ID (Leave blank to create a new tenant):</label>
+        <input type="number" id="tenantId" name="tenantId" min="1" placeholder="Existing Tenant ID"><br>
+
+        <label for="isCooperativeMember">Is Cooperative Member:</label>
+        <select id="isCooperativeMember" name="isCooperativeMember">
+            <option value="1">Yes</option>
+            <option value="0" selected>No</option>
+        </select><br>
+
+        <label for="apartmentId">Apartment ID:</label>
+        <input type="number" id="apartmentId" name="apartmentId" min="1" placeholder="Apartment ID"><br>
+
+        <label for="parkingId">Parking Spot ID:</label>
+        <input type="number" id="parkingId" name="parkingId" min="1" placeholder="Parking Spot ID"><br>
+
+        <h3>Contract Details</h3>
+        <label for="rentalType">Rental Type:</label>
+        <select id="rentalType" name="rentalType">
+            <option value="Apartment">Apartment</option>
+            <option value="ParkingSpot">Parking Spot</option>
+        </select><br>
+
+        <label for="rentalId">Rental ID:</label>
+        <input type="number" id="rentalId" name="rentalId" min="1" required><br>
+
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate" name="startDate" required><br>
+
+        <label for="endDate">End Date (Leave blank for indefinite):</label>
+        <input type="date" id="endDate" name="endDate"><br>
+
+        <button type="submit">Create Contract</button>
+    </form>
+    <div id="createContractResult"></div>
+
+    <script>
+        const CONTRACT_API = '/backend/contracts';
+
+        // Handle contract creation
+        document.getElementById('createContractForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Gather form data
+            const payload = {
+                tenant_id: document.getElementById('tenantId').value || null,
+                is_cooperative_member: document.getElementById('isCooperativeMember').value,
+                apartment_id: document.getElementById('apartmentId').value || null,
+                parking_id: document.getElementById('parkingId').value || null,
+                rental_type: document.getElementById('rentalType').value,
+                rental_id: document.getElementById('rentalId').value,
+                start_date: document.getElementById('startDate').value,
+                end_date: document.getElementById('endDate').value || null
+            };
+
+            try {
+                const response = await fetch(CONTRACT_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                document.getElementById('createContractResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('createContractResult').innerText = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
