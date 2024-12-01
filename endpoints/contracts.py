@@ -30,7 +30,7 @@ def query_db(query, args=(), one=False, commit=False, fetch_last_id=False):
 
 
 
-
+#create a new contract
 @contract_bp.route('/backend/contracts', methods=['POST'])
 def create_contract():
     data = request.json
@@ -141,6 +141,63 @@ def create_contract():
     except Exception as e:
         print(f"Error occurred: {e}")
         return jsonify({"error": str(e)}), 500
+    
+
+#read all contracts
+@contract_bp.route('/backend/contracts', methods=['GET'])
+def get_contracts():
+    rental_type = request.args.get('rental_type')  # Optional filter
+    query = """
+    SELECT
+        Contract.id AS contract_id,
+        Tenant.id AS tenant_id,
+        Person.first_name || ' ' || Person.last_name AS tenant_name,
+        Contract.rental_type,
+        Contract.rental_id,
+        Contract.start_date,
+        Contract.end_date,
+        Contract.is_deleted
+    FROM Contract
+    JOIN Tenant ON Contract.tenant_id = Tenant.id
+    JOIN Person ON Tenant.person_id = Person.id
+    WHERE Contract.is_deleted = 0
+    """
+
+    params = []
+    if rental_type:
+        query += " AND Contract.rental_type = ?"
+        params.append(rental_type)
+
+    result = query_db(query, params)
+    if "error" in result:
+        return jsonify(result), 500
+
+    contracts = [dict(row) for row in result]
+    return jsonify(contracts), 200
+
+    
+
+#update the end date of a contract
+@contract_bp.route('/backend/contracts/<int:contract_id>', methods=['PUT'])
+def update_contract(contract_id):
+    data = request.json
+    end_date = data.get('end_date')
+
+    if not end_date:
+        return jsonify({"error": "end_date is required"}), 400
+
+    query = """
+    UPDATE Contract
+    SET end_date = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ? AND is_deleted = 0
+    """
+    result = query_db(query, (end_date, contract_id), commit=True)
+
+    if "error" in result:
+        return jsonify(result), 500
+
+    return jsonify({"message": "Contract updated successfully"}), 200
+
 
 
 # Soft DELETE a contract
