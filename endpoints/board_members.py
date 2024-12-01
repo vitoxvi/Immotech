@@ -58,7 +58,7 @@ def create_board_member():
         person_query,
         (first_name, last_name, date_of_birth, address, phone_number, email, bank_correspondence),
         commit=True,
-        return_last_id=True  # Fetch last inserted ID
+        return_last_id=True
     )
 
     if "error" in person_result:
@@ -70,7 +70,7 @@ def create_board_member():
 
     # Step 2: Create BoardMember linked to the Person
     board_member_query = """
-    INSERT INTO BoardMember (id, role)
+    INSERT INTO BoardMember (person_id, role)
     VALUES (?, ?)
     """
     board_member_result = query_db(
@@ -85,27 +85,24 @@ def create_board_member():
     return jsonify({
         "message": "Board member and associated Person created successfully",
         "person_id": person_id,
-        "board_member_id": person_id  # Assuming BoardMember ID matches Person ID
     }), 201
 
 
-
-# READ all board members
 @board_member_bp.route('/backend/board_members', methods=['GET'])
 def get_all_board_members():
     query = """
     SELECT 
-        BoardMember.id AS board_member_id, 
-        BoardMember.role, 
-        Person.first_name, 
-        Person.last_name, 
-        Person.date_of_birth, 
-        Person.address, 
-        Person.phone_number, 
-        Person.email, 
+        BoardMember.id AS board_member_id,
+        BoardMember.role,
+        Person.first_name,
+        Person.last_name,
+        Person.date_of_birth,
+        Person.address,
+        Person.phone_number,
+        Person.email,
         Person.bank_correspondence
     FROM BoardMember
-    JOIN Person ON BoardMember.id = Person.id
+    JOIN Person ON BoardMember.person_id = Person.id
     """
     result = query_db(query)
     if "error" in result:
@@ -115,22 +112,21 @@ def get_all_board_members():
     return jsonify(board_members), 200
 
 
-# READ a single board member
 @board_member_bp.route('/backend/board_members/<int:board_member_id>', methods=['GET'])
 def get_board_member(board_member_id):
     query = """
     SELECT 
-        BoardMember.id AS board_member_id, 
-        BoardMember.role, 
-        Person.first_name, 
-        Person.last_name, 
-        Person.date_of_birth, 
-        Person.address, 
-        Person.phone_number, 
-        Person.email, 
+        BoardMember.id AS board_member_id,
+        BoardMember.role,
+        Person.first_name,
+        Person.last_name,
+        Person.date_of_birth,
+        Person.address,
+        Person.phone_number,
+        Person.email,
         Person.bank_correspondence
     FROM BoardMember
-    JOIN Person ON BoardMember.id = Person.id
+    JOIN Person ON BoardMember.person_id = Person.id
     WHERE BoardMember.id = ?
     """
     result = query_db(query, (board_member_id,), one=True)
@@ -140,8 +136,6 @@ def get_board_member(board_member_id):
     return jsonify(dict(result)), 200
 
 
-
-# UPDATE an existing board member
 @board_member_bp.route('/backend/board_members/<int:board_member_id>', methods=['PUT'])
 def update_board_member(board_member_id):
     data = request.json
@@ -162,7 +156,6 @@ def update_board_member(board_member_id):
     return jsonify({"message": "Board member updated successfully"}), 200
 
 
-# DELETE a board member
 @board_member_bp.route('/backend/board_members/<int:board_member_id>', methods=['DELETE'])
 def delete_board_member(board_member_id):
     query = "DELETE FROM BoardMember WHERE id = ?"
@@ -171,3 +164,5 @@ def delete_board_member(board_member_id):
         return jsonify(result), 500
 
     return jsonify({"message": "Board member deleted successfully"}), 200
+
+
