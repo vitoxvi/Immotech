@@ -1,15 +1,13 @@
 from flask import Blueprint, request, jsonify
 import sqlite3
 
-# Define the Blueprint
 tenant_bp = Blueprint('tenant', __name__)
 DATABASE = 'database.db'
 
-
-# Helper function to interact with the database
+# Helper function for database operations
 def query_db(query, args=(), one=False, commit=False):
     conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row  # Fetch rows as dictionaries
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     result = None
     try:
@@ -26,60 +24,61 @@ def query_db(query, args=(), one=False, commit=False):
     return (result[0] if result else None) if one and not commit else result
 
 
-# CREATE a new tenant
-@tenant_bp.route('/backend/tenants', methods=['POST'])
-def create_tenant():
-    data = request.json
-    id = data.get('id')
-    is_cooperative_member = data.get('is_cooperative_member')
-    apartment_id = data.get('apartment_id')
-    parking_id = data.get('parking_id')
-
-    if id is None or is_cooperative_member is None:
-        return jsonify({"error": "Tenant ID and cooperative membership status are required"}), 400
-
-    query = """
-    INSERT INTO Tenant (id, is_coroperative_member, apartment_id, parking_id)
-    VALUES (?, ?, ?, ?)
-    """
-    result = query_db(query, (id, is_cooperative_member, apartment_id, parking_id), commit=True)
-    if "error" in result:
-        return jsonify(result), 500
-
-    return jsonify({"message": "Tenant created successfully"}), 201
-
-
-# READ all tenants with optional filtering
 @tenant_bp.route('/backend/tenants', methods=['GET'])
-def get_all_tenants():
+def get_tenants():
     property_id = request.args.get('property_id')
     unit_id = request.args.get('unit_id')
-    apartment_id = request.args.get('apartment_id')
+    rental_type = request.args.get('rental_type')  # New filter for rental type
+
+    # Base query
+    query = """
+    SELECT
+        Tenant.id AS tenant_id,
+        Tenant.is_coroperative_member,
+        Person.first_name,
+        Person.last_name,
+        Person.date_of_birth,
+        Person.address,
+        Person.phone_number,
+        Person.email,
+        Contract.rental_type,
+        Contract.start_date,
+        Contract.end_date,
+        CASE
+            WHEN Contract.rental_type = 'Apartment' THEN Apartment.unit_id
+            ELSE NULL
+        END AS unit_id
+    FROM Tenant
+    JOIN Person ON Tenant.person_id = Person.id
+    JOIN Contract ON Tenant.id = Contract.tenant_id
+    LEFT JOIN Apartment ON Contract.rental_type = 'Apartment' AND Contract.rental_id = Apartment.id
+    LEFT JOIN ParkingSpot ON Contract.rental_type = 'ParkingSpot' AND Contract.rental_id = ParkingSpot.id
+    WHERE Contract.is_deleted = 0
+    """
+
+    # Filtering logic
+    filters = []
+    params = []
+
+    if rental_type:
+        filters.append("Contract.rental_type = ?")
+        params.append(rental_type)
 
     if property_id:
-        query = """
-        SELECT Tenant.*
-        FROM Tenant
-        JOIN Apartment ON Tenant.apartment_id = Apartment.id
-        JOIN Unit ON Apartment.property_id = Unit.property_id
-        WHERE Unit.property_id = ?
-        """
-        result = query_db(query, (property_id,))
-    elif unit_id:
-        query = """
-        SELECT Tenant.*
-        FROM Tenant
-        JOIN Apartment ON Tenant.apartment_id = Apartment.id
-        WHERE Apartment.unit_id = ?
-        """
-        result = query_db(query, (unit_id,))
-    elif apartment_id:
-        query = "SELECT * FROM Tenant WHERE apartment_id = ?"
-        result = query_db(query, (apartment_id,))
-    else:
-        query = "SELECT * FROM Tenant"
-        result = query_db(query)
+        filters.append("""
+            (Apartment.unit_id IN (SELECT id FROM Unit WHERE property_id = ?)
+            OR ParkingSpot.property_id = ?)
+        """)
+        params.extend([property_id, property_id])
 
+    if unit_id:
+        filters.append("Apartment.unit_id = ?")
+        params.append(unit_id)
+
+    if filters:
+        query += " AND " + " AND ".join(filters)
+
+    result = query_db(query, params)
     if "error" in result:
         return jsonify(result), 500
 
@@ -88,46 +87,22 @@ def get_all_tenants():
 
 
 
-# READ a single tenant by ID
-@tenant_bp.route('/backend/tenants/<int:tenant_id>', methods=['GET'])
-def get_tenant(tenant_id):
-    query = "SELECT * FROM Tenant WHERE id = ?"
-    result = query_db(query, (tenant_id,), one=True)
-    if not result:
-        return jsonify({"error": "Tenant not found"}), 404
-
-    return jsonify(dict(result)), 200
-
-
-# UPDATE an existing tenant
+# Update tenant
 @tenant_bp.route('/backend/tenants/<int:tenant_id>', methods=['PUT'])
 def update_tenant(tenant_id):
     data = request.json
     is_cooperative_member = data.get('is_cooperative_member')
-    apartment_id = data.get('apartment_id')
-    parking_id = data.get('parking_id')
 
-    if is_cooperative_member is None:
-        return jsonify({"error": "Cooperative membership status is required"}), 400
-
+    # Update query
     query = """
     UPDATE Tenant
-    SET is_coroperative_member = ?, apartment_id = ?, parking_id = ?, updated_at = CURRENT_TIMESTAMP
+    SET is_coroperative_member = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
     """
-    result = query_db(query, (is_cooperative_member, apartment_id, parking_id, tenant_id), commit=True)
+    result = query_db(query, (is_cooperative_member, tenant_id), commit=True)
+
     if "error" in result:
         return jsonify(result), 500
 
     return jsonify({"message": "Tenant updated successfully"}), 200
 
-
-# DELETE a tenant
-@tenant_bp.route('/backend/tenants/<int:tenant_id>', methods=['DELETE'])
-def delete_tenant(tenant_id):
-    query = "DELETE FROM Tenant WHERE id = ?"
-    result = query_db(query, (tenant_id,), commit=True)
-    if "error" in result:
-        return jsonify(result), 500
-
-    return jsonify({"message": "Tenant deleted successfully"}), 200
