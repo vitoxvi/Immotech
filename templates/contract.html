@@ -25,25 +25,40 @@
             }
         }
 
-        // Display contracts in the UI
+        // Display contracts grouped by tenant
         function displayContracts(contracts) {
             const contractList = document.getElementById('contractList');
             contractList.innerHTML = '';
 
-            contracts.forEach(contract => {
-                const contractDiv = document.createElement('div');
-                contractDiv.innerHTML = `
-                    <strong>Contract ID:</strong> ${contract.contract_id}<br>
-                    <strong>Tenant:</strong> ${contract.tenant_name}<br>
-                    <strong>Rental Type:</strong> ${contract.rental_type}<br>
-                    <strong>Rental ID:</strong> ${contract.rental_id}<br>
-                    <strong>Start Date:</strong> ${contract.start_date}<br>
-                    <strong>End Date:</strong> ${contract.end_date || 'Indefinite'}<br>
-                    <button onclick="softDeleteContract(${contract.contract_id})">Delete</button>
-                    <button onclick="updateContract(${contract.contract_id})">Update End Date</button>
-                    <hr>
+            const groupedContracts = contracts.reduce((group, contract) => {
+                const tenantId = contract.tenant_id;
+                if (!group[tenantId]) {
+                    group[tenantId] = [];
+                }
+                group[tenantId].push(contract);
+                return group;
+            }, {});
+
+            Object.entries(groupedContracts).forEach(([tenantId, tenantContracts]) => {
+                const tenantDiv = document.createElement('div');
+                tenantDiv.innerHTML = `
+                    <h3>Tenant: ${tenantContracts[0].tenant_name} (ID: ${tenantId})</h3>
                 `;
-                contractList.appendChild(contractDiv);
+                tenantContracts.forEach(contract => {
+                    const contractDiv = document.createElement('div');
+                    contractDiv.innerHTML = `
+                        <strong>Contract ID:</strong> ${contract.contract_id}<br>
+                        <strong>Rental Type:</strong> ${contract.rental_type}<br>
+                        <strong>Rental ID:</strong> ${contract.rental_id}<br>
+                        <strong>Start Date:</strong> ${contract.start_date}<br>
+                        <strong>End Date:</strong> ${contract.end_date || 'Indefinite'}<br>
+                        <button onclick="softDeleteContract(${contract.contract_id})">Delete</button>
+                        <button onclick="updateContract(${contract.contract_id})">Update End Date</button>
+                        <hr>
+                    `;
+                    tenantDiv.appendChild(contractDiv);
+                });
+                contractList.appendChild(tenantDiv);
             });
         }
 
@@ -79,104 +94,10 @@
                 alert(`Error updating contract: ${error.message}`);
             }
         }
-
-        // Create a new contract
-        document.getElementById('createContractForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const rentalType = document.getElementById('rentalType').value;
-            if (!rentalType) {
-                alert('Please select a rental type.');
-                return;
-            }
-
-            const payload = {
-                tenant_id: document.getElementById('tenantId').value || null,
-                is_cooperative_member: document.getElementById('isCooperativeMember').value,
-                rental_type: rentalType,
-                rental_id: rentalType === 'Apartment'
-                    ? document.getElementById('apartmentId').value
-                    : document.getElementById('parkingId').value,
-                start_date: document.getElementById('startDate').value,
-                end_date: document.getElementById('endDate').value || null,
-            };
-
-            try {
-                const response = await fetch(CONTRACT_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-                const data = await response.json();
-                alert(data.message || `Error: ${data.error}`);
-                fetchContracts(); // Refresh the contract list
-            } catch (error) {
-                alert(`Error creating contract: ${error.message}`);
-            }
-        });
-
-        // Toggle rental-specific fields
-        function toggleRentalFields() {
-            const rentalType = document.getElementById('rentalType').value;
-            document.getElementById('apartmentFields').style.display = rentalType === 'Apartment' ? 'block' : 'none';
-            document.getElementById('parkingFields').style.display = rentalType === 'ParkingSpot' ? 'block' : 'none';
-        }
-
-        // Initialize field visibility on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('apartmentFields').style.display = 'none';
-            document.getElementById('parkingFields').style.display = 'none';
-        });
     </script>
 </head>
 <body>
     <h1>Contract Management</h1>
-
-    <!-- Create Contract -->
-    <h2>Create New Contract</h2>
-    <form id="createContractForm">
-        <h3>Tenant Details</h3>
-        <label for="tenantId">Tenant ID (Leave blank to create a new tenant):</label>
-        <input type="number" id="tenantId" name="tenantId" min="1" placeholder="Existing Tenant ID"><br>
-
-        <label for="isCooperativeMember">Is Cooperative Member:</label>
-        <select id="isCooperativeMember" name="isCooperativeMember">
-            <option value="1">Yes</option>
-            <option value="0" selected>No</option>
-        </select><br>
-
-        <h3>Rental Type</h3>
-        <label for="rentalType">Rental Type:</label>
-        <select id="rentalType" name="rentalType" onchange="toggleRentalFields()">
-            <option value="" selected disabled>Select Rental Type</option>
-            <option value="Apartment">Apartment</option>
-            <option value="ParkingSpot">Parking Spot</option>
-        </select><br>
-
-        <!-- Apartment-Specific Fields -->
-        <div id="apartmentFields">
-            <label for="apartmentId">Apartment ID:</label>
-            <input type="number" id="apartmentId" name="apartmentId" min="1" placeholder="Apartment ID"><br>
-        </div>
-
-        <!-- Parking Spot-Specific Fields -->
-        <div id="parkingFields">
-            <label for="parkingId">Parking Spot ID:</label>
-            <input type="number" id="parkingId" name="parkingId" min="1" placeholder="Parking Spot ID"><br>
-        </div>
-
-        <h3>Contract Details</h3>
-        <label for="startDate">Start Date:</label>
-        <input type="date" id="startDate" name="startDate" required><br>
-
-        <label for="endDate">End Date (Leave blank for indefinite):</label>
-        <input type="date" id="endDate" name="endDate"><br>
-
-        <button type="submit">Create Contract</button>
-    </form>
-    <div id="createContractResult"></div>
-
-    <hr>
 
     <!-- Filter Contracts -->
     <h2>View Contracts</h2>

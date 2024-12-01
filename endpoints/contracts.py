@@ -143,15 +143,18 @@ def create_contract():
         return jsonify({"error": str(e)}), 500
     
 
-#read all contracts
+# READ all contracts with person details
 @contract_bp.route('/backend/contracts', methods=['GET'])
 def get_contracts():
     rental_type = request.args.get('rental_type')  # Optional filter
+
     query = """
     SELECT
         Contract.id AS contract_id,
         Tenant.id AS tenant_id,
         Person.first_name || ' ' || Person.last_name AS tenant_name,
+        Person.phone_number,
+        Person.email,
         Contract.rental_type,
         Contract.rental_id,
         Contract.start_date,
@@ -161,6 +164,7 @@ def get_contracts():
     JOIN Tenant ON Contract.tenant_id = Tenant.id
     JOIN Person ON Tenant.person_id = Person.id
     WHERE Contract.is_deleted = 0
+    ORDER BY Tenant.id, Contract.start_date DESC
     """
 
     params = []
@@ -174,6 +178,7 @@ def get_contracts():
 
     contracts = [dict(row) for row in result]
     return jsonify(contracts), 200
+
 
     
 
