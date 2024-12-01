@@ -6,7 +6,7 @@ employee_bp = Blueprint('employee', __name__)
 DATABASE = 'database.db'
 
 
-def query_db(query, args=(), one=False, commit=False, return_last_id=False):
+def query_db(query, args=(), one=False, commit=False, fetch_last_id=False):
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row  # Fetch rows as dictionaries
     cursor = conn.cursor()
@@ -15,7 +15,7 @@ def query_db(query, args=(), one=False, commit=False, return_last_id=False):
         cursor.execute(query, args)
         if commit:
             conn.commit()
-            if return_last_id:
+            if fetch_last_id:
                 result = {"id": cursor.lastrowid}
             else:
                 result = {"status": "success"}
@@ -49,44 +49,48 @@ def create_employee():
     if not all([first_name, last_name, role, employment_rate]):
         return jsonify({"error": "Missing required fields"}), 400
 
-    # Step 1: Create Person
-    person_query = """
-    INSERT INTO Person (first_name, last_name, date_of_birth, address, phone_number, email, bank_correspondence)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    """
-    person_result = query_db(
-        person_query,
-        (first_name, last_name, date_of_birth, address, phone_number, email, bank_correspondence),
-        commit=True,
-        return_last_id=True  # Explicitly fetch last inserted ID
-    )
+    try:
+        # Step 1: Create Person
+        person_query = """
+        INSERT INTO Person (first_name, last_name, date_of_birth, address, phone_number, email, bank_correspondence)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """
+        person_result = query_db(
+            person_query,
+            (first_name, last_name, date_of_birth, address, phone_number, email, bank_correspondence),
+            commit=True,
+            fetch_last_id=True
+        )
 
-    if "error" in person_result:
-        return jsonify(person_result), 500
+        if "error" in person_result:
+            return jsonify(person_result), 500
 
-    person_id = person_result.get("id")
-    if not person_id:
-        return jsonify({"error": "Failed to create person, person ID not generated"}), 500
+        person_id = person_result.get("id")
+        if not person_id:
+            return jsonify({"error": "Failed to create person, person_id not generated"}), 500
 
-    # Step 2: Create Employee linked to the Person
-    employee_query = """
-    INSERT INTO Employee (id, role, employment_rate)
-    VALUES (?, ?, ?)
-    """
-    employee_result = query_db(
-        employee_query,
-        (person_id, role, employment_rate),
-        commit=True
-    )
+        # Step 2: Create Employee linked to the Person
+        employee_query = """
+        INSERT INTO Employee (person_id, role, employment_rate)
+        VALUES (?, ?, ?)
+        """
+        employee_result = query_db(
+            employee_query,
+            (person_id, role, employment_rate),
+            commit=True
+        )
 
-    if "error" in employee_result:
-        return jsonify(employee_result), 500
+        if "error" in employee_result:
+            return jsonify(employee_result), 500
 
-    return jsonify({
-        "message": "Employee and associated Person created successfully",
-        "person_id": person_id,
-        "employee_id": person_id  # Assuming Employee ID matches Person ID
-    }), 201
+        return jsonify({
+            "message": "Employee and associated Person created successfully",
+            "person_id": person_id,
+            "employee_id": person_id  # Assuming Employee ID matches Person ID
+        }), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # READ all employees with person details
@@ -108,7 +112,6 @@ def get_all_employees():
         FROM Employee
         JOIN Person ON Employee.person_id = Person.id
         """
-
     result = query_db(query)
     if "error" in result:
         return jsonify(result), 500
@@ -117,9 +120,7 @@ def get_all_employees():
     return jsonify(employees), 200
 
 
-
 # READ a single employee by ID
-# READ a single employee by ID with person details
 @employee_bp.route('/backend/employees/<int:employee_id>', methods=['GET'])
 def get_employee(employee_id):
     query = """
@@ -139,7 +140,6 @@ def get_employee(employee_id):
         JOIN Person ON Employee.person_id = Person.id
         WHERE Employee.id = ?
         """
-
     result = query_db(query, (employee_id,), one=True)
     if not result:
         return jsonify({"error": "Employee not found"}), 404

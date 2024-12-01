@@ -7,8 +7,7 @@ from datetime import datetime
 contract_bp = Blueprint('contract', __name__)
 DATABASE = 'database.db'
 
-# Helper function to interact with the database
-def query_db(query, args=(), one=False, commit=False):
+def query_db(query, args=(), one=False, commit=False, fetch_last_id=False):
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row  # Fetch rows as dictionaries
     cursor = conn.cursor()
@@ -17,7 +16,10 @@ def query_db(query, args=(), one=False, commit=False):
         cursor.execute(query, args)
         if commit:
             conn.commit()
-            result = {"status": "success"}
+            if fetch_last_id:
+                result = {"id": cursor.lastrowid}  # Return the last inserted row ID
+            else:
+                result = {"status": "success"}
         else:
             result = cursor.fetchall()
     except sqlite3.Error as e:
@@ -27,6 +29,8 @@ def query_db(query, args=(), one=False, commit=False):
     return (result[0] if result else None) if one and not commit else result
 
 
+
+
 @contract_bp.route('/backend/contracts', methods=['POST'])
 def create_contract():
     data = request.json
@@ -34,6 +38,14 @@ def create_contract():
     # Tenant details
     tenant_id = data.get('tenant_id')
     is_cooperative_member = data.get('is_cooperative_member')
+
+    # Person details (for creating a new tenant)
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    date_of_birth = data.get('date_of_birth')
+    address = data.get('address')
+    phone_number = data.get('phone_number')
+    email = data.get('email')
 
     # Rental details
     rental_type = data.get('rental_type')
@@ -47,19 +59,42 @@ def create_contract():
     try:
         # If tenant_id is not provided, create a new tenant
         if not tenant_id:
-            tenant_query = """
-            INSERT INTO Tenant (is_coroperative_member)
-            VALUES (?)
+            # Step 1: Create a new Person
+            person_query = """
+            INSERT INTO Person (first_name, last_name, date_of_birth, address, phone_number, email)
+            VALUES (?, ?, ?, ?, ?, ?)
             """
-            tenant_result = query_db(tenant_query, (is_cooperative_member,), commit=True)
+            person_result = query_db(
+                person_query,
+                (first_name, last_name, date_of_birth, address, phone_number, email),
+                commit=True,
+                return_last_id=True
+            )
+
+            if "error" in person_result:
+                return jsonify(person_result), 500
+
+            person_id = person_result.get("id")
+            if not person_id:
+                return jsonify({"error": "Failed to create Person, person_id not generated"}), 500
+
+            # Step 2: Create a new Tenant linked to the Person
+            tenant_query = """
+            INSERT INTO Tenant (person_id, is_coroperative_member)
+            VALUES (?, ?)
+            """
+            tenant_result = query_db(
+                tenant_query,
+                (person_id, is_cooperative_member),
+                commit=True,
+                return_last_id=True
+            )
 
             if "error" in tenant_result:
                 return jsonify(tenant_result), 500
 
             # Get the ID of the newly created tenant
-            tenant_id_query = "SELECT last_insert_rowid() AS tenant_id"
-            tenant_id_result = query_db(tenant_id_query, one=True)
-            tenant_id = tenant_id_result['tenant_id']
+            tenant_id = tenant_result["id"]
 
         # Validate rental type and associated IDs
         if rental_type == "Apartment":
@@ -78,10 +113,10 @@ def create_contract():
         if end_date and datetime.strptime(end_date, "%Y-%m-%d") < datetime.strptime(start_date, "%Y-%m-%d"):
             return jsonify({"error": "End date cannot be earlier than start date"}), 400
 
-        # Create the contract
+        # Step 3: Create the contract
         contract_query = """
-            INSERT INTO Contract (tenant_id, rental_type, rental_id, start_date, end_date)
-            VALUES (?, ?, ?, ?, ?)
+        INSERT INTO Contract (tenant_id, rental_type, rental_id, start_date, end_date)
+        VALUES (?, ?, ?, ?, ?)
         """
         contract_result = query_db(
             contract_query,
@@ -106,9 +141,6 @@ def create_contract():
     except Exception as e:
         print(f"Error occurred: {e}")
         return jsonify({"error": str(e)}), 500
-
-
-
 
 
 # Soft DELETE a contract
