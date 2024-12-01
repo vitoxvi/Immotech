@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Management</title>
+</head>
+<body>
+    <h1>Property Management</h1>
+
+    <!-- Create Property -->
+    <h2>Create Property</h2>
+    <form id="createPropertyForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br>
+
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" required><br>
+
+        <label for="propertyDocument">Property Document (Optional):</label>
+        <input type="text" id="propertyDocument" name="propertyDocument"><br>
+
+        <button type="submit">Create Property</button>
+    </form>
+    <div id="createResult"></div>
+
+    <hr>
+
+    <!-- View Properties -->
+    <h2>View Properties</h2>
+    <button id="viewPropertiesButton">View All Properties</button>
+    <div id="propertiesList"></div>
+
+    <script>
+        const PROPERTY_API = '/backend/properties';
+
+        // Create Property
+        document.getElementById('createPropertyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                name: document.getElementById('name').value,
+                address: document.getElementById('address').value,
+                property_document: document.getElementById('propertyDocument').value
+            };
+
+            try {
+                const response = await fetch(PROPERTY_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                document.getElementById('createResult').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('createResult').innerText = `Error: ${error}`;
+            }
+        });
+
+        // View Properties
+        document.getElementById('viewPropertiesButton').addEventListener('click', async () => {
+            try {
+                const response = await fetch(PROPERTY_API);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const propertiesListDiv = document.getElementById('propertiesList');
+                propertiesListDiv.innerHTML = ''; // Clear previous content
+
+                data.forEach(property => {
+                    const propertyInfo = `
+                        <div>
+                            <strong>ID:</strong> ${property.id}<br>
+                            <strong>Name:</strong> ${property.name}<br>
+                            <strong>Address:</strong> ${property.address}<br>
+                            <strong>Document:</strong> ${property.property_document || 'None'}<br>
+                            <button onclick="deleteProperty(${property.id})">Delete</button>
+                            <hr>
+                        </div>
+                    `;
+                    propertiesListDiv.innerHTML += propertyInfo;
+                });
+            } catch (error) {
+                document.getElementById('propertiesList').innerText = `Error: ${error}`;
+            }
+        });
+
+        // Delete Property
+        async function deleteProperty(propertyId) {
+            if (!confirm('Are you sure you want to delete this property?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${PROPERTY_API}/${propertyId}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                alert(data.message || 'Property deleted successfully!');
+                document.getElementById('viewPropertiesButton').click(); // Refresh the list
+            } catch (error) {
+                alert(`Error: ${error}`);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -25,7 +25,7 @@ def query_db(query, args=(), one=False, commit=False):
 
 
 # CREATE a new property
-@property_bp.route('/properties', methods=['POST'])
+@property_bp.route('/backend/properties', methods=['POST'])
 def create_property():
     data = request.json
     name = data.get('name')
@@ -47,7 +47,7 @@ def create_property():
 
 
 # READ all properties
-@property_bp.route('/properties', methods=['GET'])
+@property_bp.route('/backend/properties', methods=['GET'])
 def get_all_properties():
     query = "SELECT * FROM Property"
     result = query_db(query)
@@ -59,7 +59,7 @@ def get_all_properties():
 
 
 # READ a single property by ID
-@property_bp.route('/properties/<int:property_id>', methods=['GET'])
+@property_bp.route('/backend/properties/<int:property_id>', methods=['GET'])
 def get_property(property_id):
     query = "SELECT * FROM Property WHERE id = ?"
     result = query_db(query, (property_id,), one=True)
@@ -70,7 +70,7 @@ def get_property(property_id):
 
 
 # UPDATE an existing property
-@property_bp.route('/properties/<int:property_id>', methods=['PUT'])
+@property_bp.route('/backend/properties/<int:property_id>', methods=['PUT'])
 def update_property(property_id):
     data = request.json
     name = data.get('name')
@@ -93,7 +93,7 @@ def update_property(property_id):
 
 
 # DELETE a property
-@property_bp.route('/properties/<int:property_id>', methods=['DELETE'])
+@property_bp.route('/backend/properties/<int:property_id>', methods=['DELETE'])
 def delete_property(property_id):
     query = "DELETE FROM Property WHERE id = ?"
     result = query_db(query, (property_id,), commit=True)

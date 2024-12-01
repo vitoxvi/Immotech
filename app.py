@@ -9,6 +9,7 @@ from endpoints.board_members import board_member_bp
 from endpoints.employees import employee_bp
 from endpoints.vehicle_usage_logs import vehicle_usage_log_bp
 from endpoints.vehicles import vehicle_bp
+from endpoints.units import unit_bp
 
 
 app = Flask(__name__)
@@ -37,6 +38,24 @@ def vehicle_usage_logs():
 def contracts():
     return render_template('contract.html')
 
+@app.route('/parking_spots')
+def parking_spots():
+    return render_template('parking_spot.html')
+
+@app.route('/properties')
+def property():
+    return render_template('property.html')
+
+@app.route('/units')
+def units():
+    return render_template('unit.html')
+
+@app.route('/appartments')
+def appartments():
+    return render_template('appartment.html')
+
+
+
 
 # Register Blueprints
 app.register_blueprint(property_bp)
@@ -49,6 +68,7 @@ app.register_blueprint(board_member_bp)
 app.register_blueprint(employee_bp)
 app.register_blueprint(vehicle_usage_log_bp)
 app.register_blueprint(vehicle_bp)
+app.register_blueprint(unit_bp)
 
 
 if __name__ == "__main__":

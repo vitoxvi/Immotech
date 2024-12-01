@@ -27,7 +27,7 @@ def query_db(query, args=(), one=False, commit=False):
 
 
 # CREATE a new parking spot
-@parking_spot_bp.route('/parking_spots', methods=['POST'])
+@parking_spot_bp.route('/backend/parking_spots', methods=['POST'])
 def create_parking_spot():
     data = request.json
     rent = data.get('rent')
@@ -49,11 +49,17 @@ def create_parking_spot():
     return jsonify({"message": "Parking spot created successfully"}), 201
 
 
-# READ all parking spots
-@parking_spot_bp.route('/parking_spots', methods=['GET'])
+# READ all parking spots with optional filtering by property ID
+@parking_spot_bp.route('/backend/parking_spots', methods=['GET'])
 def get_all_parking_spots():
-    query = "SELECT * FROM ParkingSpot"
-    result = query_db(query)
+    property_id = request.args.get('property_id')
+    if property_id:
+        query = "SELECT * FROM ParkingSpot WHERE property_id = ?"
+        result = query_db(query, (property_id,))
+    else:
+        query = "SELECT * FROM ParkingSpot"
+        result = query_db(query)
+
     if "error" in result:
         return jsonify(result), 500
 
@@ -62,7 +68,7 @@ def get_all_parking_spots():
 
 
 # READ a single parking spot by ID
-@parking_spot_bp.route('/parking_spots/<int:parking_spot_id>', methods=['GET'])
+@parking_spot_bp.route('/backend/parking_spots/<int:parking_spot_id>', methods=['GET'])
 def get_parking_spot(parking_spot_id):
     query = "SELECT * FROM ParkingSpot WHERE id = ?"
     result = query_db(query, (parking_spot_id,), one=True)
@@ -73,7 +79,7 @@ def get_parking_spot(parking_spot_id):
 
 
 # UPDATE an existing parking spot
-@parking_spot_bp.route('/parking_spots/<int:parking_spot_id>', methods=['PUT'])
+@parking_spot_bp.route('/backend/parking_spots/<int:parking_spot_id>', methods=['PUT'])
 def update_parking_spot(parking_spot_id):
     data = request.json
     rent = data.get('rent')
@@ -97,7 +103,7 @@ def update_parking_spot(parking_spot_id):
 
 
 # DELETE a parking spot
-@parking_spot_bp.route('/parking_spots/<int:parking_spot_id>', methods=['DELETE'])
+@parking_spot_bp.route('/backend/parking_spots/<int:parking_spot_id>', methods=['DELETE'])
 def delete_parking_spot(parking_spot_id):
     query = "DELETE FROM ParkingSpot WHERE id = ?"
     result = query_db(query, (parking_spot_id,), commit=True)
