@@ -53,7 +53,8 @@ def get_tenants():
     JOIN Contract ON Tenant.id = Contract.tenant_id
     LEFT JOIN Apartment ON Contract.rental_type = 'Apartment' AND Contract.rental_id = Apartment.id
     LEFT JOIN ParkingSpot ON Contract.rental_type = 'ParkingSpot' AND Contract.rental_id = ParkingSpot.id
-    WHERE Contract.is_deleted = 0
+    WHERE (Contract.end_date IS NULL OR Contract.end_date >= DATE('now'))
+
     """
 
     # Filtering logic
