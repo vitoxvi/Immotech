@@ -5,23 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contract Management</title>
     <script>
-        // Function to toggle visibility of fields based on rental type
         function toggleRentalFields() {
             const rentalType = document.getElementById('rentalType').value;
             const apartmentFields = document.getElementById('apartmentFields');
             const parkingFields = document.getElementById('parkingFields');
 
-            if (rentalType === 'Apartment') {
-                apartmentFields.style.display = 'block';
-                parkingFields.style.display = 'none';
-            } else if (rentalType === 'ParkingSpot') {
-                apartmentFields.style.display = 'none';
-                parkingFields.style.display = 'block';
-            } else {
-                apartmentFields.style.display = 'none';
-                parkingFields.style.display = 'none';
-            }
+            apartmentFields.style.display = rentalType === 'Apartment' ? 'block' : 'none';
+            parkingFields.style.display = rentalType === 'ParkingSpot' ? 'block' : 'none';
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('apartmentFields').style.display = 'none';
+            document.getElementById('parkingFields').style.display = 'none';
+        });
     </script>
 </head>
 <body>
@@ -31,46 +27,40 @@
     <h2>Create New Contract</h2>
     <form id="createContractForm">
         <h3>Tenant Details</h3>
-        <label for="tenantId">Tenant ID (Leave blank to create a new tenant):</label>
+        <label for="tenantId" aria-label="Enter tenant ID">Tenant ID (Leave blank to create a new tenant):</label>
         <input type="number" id="tenantId" name="tenantId" min="1" placeholder="Existing Tenant ID"><br>
 
-        <label for="isCooperativeMember">Is Cooperative Member:</label>
+        <label for="isCooperativeMember" aria-label="Select cooperative membership status">Is Cooperative Member:</label>
         <select id="isCooperativeMember" name="isCooperativeMember">
             <option value="1">Yes</option>
             <option value="0" selected>No</option>
         </select><br>
 
         <h3>Rental Type</h3>
-        <label for="rentalType">Rental Type:</label>
+        <label for="rentalType" aria-label="Select rental type">Rental Type:</label>
         <select id="rentalType" name="rentalType" onchange="toggleRentalFields()">
             <option value="" selected disabled>Select Rental Type</option>
             <option value="Apartment">Apartment</option>
             <option value="ParkingSpot">Parking Spot</option>
         </select><br>
 
-        <!-- Apartment-Specific Fields -->
-        <div id="apartmentFields" style="display: none;">
+        <div id="apartmentFields">
             <h3>Apartment Details</h3>
-            <label for="apartmentId">Apartment ID:</label>
+            <label for="apartmentId" aria-label="Enter apartment ID">Apartment ID:</label>
             <input type="number" id="apartmentId" name="apartmentId" min="1" placeholder="Apartment ID"><br>
-
-            <label for="unitId">Unit ID (Optional):</label>
-            <input type="number" id="unitId" name="unitId" min="1" placeholder="Unit ID"><br>
         </div>
 
-        <!-- Parking Spot-Specific Fields -->
-        <div id="parkingFields" style="display: none;">
+        <div id="parkingFields">
             <h3>Parking Spot Details</h3>
-            <label for="parkingId">Parking Spot ID:</label>
+            <label for="parkingId" aria-label="Enter parking spot ID">Parking Spot ID:</label>
             <input type="number" id="parkingId" name="parkingId" min="1" placeholder="Parking Spot ID"><br>
         </div>
 
         <h3>Contract Details</h3>
-
-        <label for="startDate">Start Date:</label>
+        <label for="startDate" aria-label="Select start date">Start Date:</label>
         <input type="date" id="startDate" name="startDate" required><br>
 
-        <label for="endDate">End Date (Leave blank for indefinite):</label>
+        <label for="endDate" aria-label="Select end date">End Date (Leave blank for indefinite):</label>
         <input type="date" id="endDate" name="endDate"><br>
 
         <button type="submit">Create Contract</button>
@@ -80,35 +70,46 @@
     <script>
         const CONTRACT_API = '/backend/contracts';
 
-        // Handle contract creation
         document.getElementById('createContractForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const rentalType = document.getElementById('rentalType').value;
+            if (!rentalType) {
+                alert('Please select a rental type.');
+                return;
+            }
+
+            const startDate = new Date(document.getElementById('startDate').value);
+            const endDate = document.getElementById('endDate').value
+                ? new Date(document.getElementById('endDate').value)
+                : null;
+
+            if (endDate && endDate < startDate) {
+                alert('End date cannot be earlier than start date.');
+                return;
+            }
+
             const payload = {
                 tenant_id: document.getElementById('tenantId').value || null,
                 is_cooperative_member: document.getElementById('isCooperativeMember').value,
                 rental_type: rentalType,
+                rental_id: rentalType === 'Apartment'
+                    ? document.getElementById('apartmentId').value
+                    : document.getElementById('parkingId').value,
                 start_date: document.getElementById('startDate').value,
                 end_date: document.getElementById('endDate').value || null,
             };
-
-            // Add apartment or parking spot fields based on rental type
-            if (rentalType === 'Apartment') {
-                payload.apartment_id = document.getElementById('apartmentId').value || null;
-                payload.unit_id = document.getElementById('unitId').value || null;
-            } else if (rentalType === 'ParkingSpot') {
-                payload.parking_id = document.getElementById('parkingId').value || null;
-            }
 
             try {
                 const response = await fetch(CONTRACT_API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
                 });
                 const data = await response.json();
-                document.getElementById('createContractResult').innerText = JSON.stringify(data, null, 2);
+                document.getElementById('createContractResult').innerText = data.error
+                    ? `Error: ${data.error}`
+                    : `Success: Contract created successfully!`;
             } catch (error) {
                 document.getElementById('createContractResult').innerText = `Error: ${error.message}`;
             }

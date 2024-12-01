@@ -54,6 +54,10 @@ def units():
 def appartments():
     return render_template('appartment.html')
 
+@app.route('/tenants')
+def tenants():
+    return render_template('tenant.html')
+
 
 
 

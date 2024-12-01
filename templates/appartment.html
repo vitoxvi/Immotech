@@ -42,6 +42,36 @@
     <button id="viewApartmentsButton">View Apartments</button>
     <div id="apartmentsList"></div>
 
+    <hr>
+
+    <!-- Update Apartment -->
+    <h2>Update Apartment</h2>
+    <form id="updateApartmentForm">
+        <label for="updateId">Apartment ID:</label>
+        <input type="number" id="updateId" name="updateId" required><br>
+
+        <label for="updateSizeSqm">Size (sqm):</label>
+        <input type="number" id="updateSizeSqm" name="updateSizeSqm" required><br>
+
+        <label for="updateRent">Rent:</label>
+        <input type="number" id="updateRent" name="updateRent" required><br>
+
+        <label for="updateRooms">Rooms:</label>
+        <input type="number" id="updateRooms" name="updateRooms"><br>
+
+        <label for="updateAddress">Address:</label>
+        <input type="text" id="updateAddress" name="updateAddress" required><br>
+
+        <label for="updateUnitNumber">Unit Number:</label>
+        <input type="text" id="updateUnitNumber" name="updateUnitNumber" required><br>
+
+        <label for="updatePropertyId">Property ID:</label>
+        <input type="number" id="updatePropertyId" name="updatePropertyId" required><br>
+
+        <button type="submit">Update Apartment</button>
+    </form>
+    <div id="updateResult"></div>
+
     <script>
         const APARTMENT_API = '/backend/apartments';
 
@@ -135,6 +165,39 @@
                 alert(`Error: ${error}`);
             }
         }
+
+        // Update Apartment
+        document.getElementById('updateApartmentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const apartmentId = document.getElementById('updateId').value;
+            const payload = {
+                size_sqm: document.getElementById('updateSizeSqm').value,
+                rent: document.getElementById('updateRent').value,
+                rooms: document.getElementById('updateRooms').value,
+                address: document.getElementById('updateAddress').value,
+                unit_number: document.getElementById('updateUnitNumber').value,
+                property_id: document.getElementById('updatePropertyId').value
+            };
+
+            try {
+                const response = await fetch(`${APARTMENT_API}/${apartmentId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                document.getElementById('updateResult').innerText = JSON.stringify(data, null, 2);
+                document.getElementById('viewApartmentsButton').click(); // Refresh the list
+            } catch (error) {
+                document.getElementById('updateResult').innerText = `Error: ${error}`;
+            }
+        });
     </script>
 </body>
 </html>

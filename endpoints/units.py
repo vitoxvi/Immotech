@@ -64,6 +64,29 @@ def get_all_units():
     return jsonify(units), 200
 
 
+# UPDATE an existing unit
+@unit_bp.route('/backend/units/<int:unit_id>', methods=['PUT'])
+def update_unit(unit_id):
+    data = request.json
+    name = data.get('name')
+    address = data.get('address')
+    property_id = data.get('property_id')
+
+    if not all([name, address, property_id]):
+        return jsonify({"error": "Name, address, and property ID are required"}), 400
+
+    query = """
+    UPDATE Unit
+    SET name = ?, address = ?, property_id = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+    """
+    result = query_db(query, (name, address, property_id, unit_id), commit=True)
+    if "error" in result:
+        return jsonify(result), 500
+
+    return jsonify({"message": "Unit updated successfully"}), 200
+
+
 # DELETE a unit
 @unit_bp.route('/backend/units/<int:unit_id>', methods=['DELETE'])
 def delete_unit(unit_id):

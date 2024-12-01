@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenant Management</title>
+</head>
+<body>
+    <h1>Tenant Management</h1>
+
+    <!-- Filter and View Tenants -->
+    <h2>View Tenants</h2>
+    <form id="filterTenantsForm">
+        <label for="filterPropertyId">Filter by Property ID:</label>
+        <input type="number" id="filterPropertyId" name="filterPropertyId"><br>
+
+        <label for="filterUnitId">Filter by Unit ID:</label>
+        <input type="number" id="filterUnitId" name="filterUnitId"><br>
+
+        <label for="filterApartmentId">Filter by Apartment ID:</label>
+        <input type="number" id="filterApartmentId" name="filterApartmentId"><br>
+
+        <button type="submit">View Tenants</button>
+    </form>
+    <div id="tenantsList"></div>
+
+    <script>
+        const TENANT_API = '/backend/tenants';
+
+        // Filter and View Tenants
+        document.getElementById('filterTenantsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const propertyId = document.getElementById('filterPropertyId').value;
+            const unitId = document.getElementById('filterUnitId').value;
+            const apartmentId = document.getElementById('filterApartmentId').value;
+
+            let url = TENANT_API;
+            if (propertyId) {
+                url += `?property_id=${propertyId}`;
+            } else if (unitId) {
+                url += `?unit_id=${unitId}`;
+            } else if (apartmentId) {
+                url += `?apartment_id=${apartmentId}`;
+            }
+
+            try {
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const tenantsListDiv = document.getElementById('tenantsList');
+                tenantsListDiv.innerHTML = ''; // Clear previous content
+
+                data.forEach(tenant => {
+                    const tenantInfo = `
+                        <div>
+                            <strong>ID:</strong> ${tenant.id}<br>
+                            <strong>Is Cooperative Member:</strong> ${tenant.is_cooperative_member ? 'Yes' : 'No'}<br>
+                            <strong>Apartment ID:</strong> ${tenant.apartment_id || 'N/A'}<br>
+                            <strong>Parking ID:</strong> ${tenant.parking_id || 'N/A'}<br>
+                            <button onclick="deleteTenant(${tenant.id})">Delete</button>
+                            <hr>
+                        </div>
+                    `;
+                    tenantsListDiv.innerHTML += tenantInfo;
+                });
+            } catch (error) {
+                document.getElementById('tenantsList').innerText = `Error: ${error}`;
+            }
+        });
+
+        // Delete Tenant
+        async function deleteTenant(tenantId) {
+            if (!confirm('Are you sure you want to delete this tenant?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${TENANT_API}/${tenantId}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                alert(data.message || 'Tenant deleted successfully!');
+                document.getElementById('filterTenantsForm').dispatchEvent(new Event('submit')); // Refresh the list
+            } catch (error) {
+                alert(`Error: ${error}`);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -27,7 +27,7 @@ def query_db(query, args=(), one=False, commit=False):
 
 
 # CREATE a new tenant
-@tenant_bp.route('/tenants', methods=['POST'])
+@tenant_bp.route('/backend/tenants', methods=['POST'])
 def create_tenant():
     data = request.json
     id = data.get('id')
@@ -49,11 +49,37 @@ def create_tenant():
     return jsonify({"message": "Tenant created successfully"}), 201
 
 
-# READ all tenants
-@tenant_bp.route('/tenants', methods=['GET'])
+# READ all tenants with optional filtering
+@tenant_bp.route('/backend/tenants', methods=['GET'])
 def get_all_tenants():
-    query = "SELECT * FROM Tenant"
-    result = query_db(query)
+    property_id = request.args.get('property_id')
+    unit_id = request.args.get('unit_id')
+    apartment_id = request.args.get('apartment_id')
+
+    if property_id:
+        query = """
+        SELECT Tenant.*
+        FROM Tenant
+        JOIN Apartment ON Tenant.apartment_id = Apartment.id
+        JOIN Unit ON Apartment.property_id = Unit.property_id
+        WHERE Unit.property_id = ?
+        """
+        result = query_db(query, (property_id,))
+    elif unit_id:
+        query = """
+        SELECT Tenant.*
+        FROM Tenant
+        JOIN Apartment ON Tenant.apartment_id = Apartment.id
+        WHERE Apartment.unit_id = ?
+        """
+        result = query_db(query, (unit_id,))
+    elif apartment_id:
+        query = "SELECT * FROM Tenant WHERE apartment_id = ?"
+        result = query_db(query, (apartment_id,))
+    else:
+        query = "SELECT * FROM Tenant"
+        result = query_db(query)
+
     if "error" in result:
         return jsonify(result), 500
 
@@ -61,8 +87,9 @@ def get_all_tenants():
     return jsonify(tenants), 200
 
 
+
 # READ a single tenant by ID
-@tenant_bp.route('/tenants/<int:tenant_id>', methods=['GET'])
+@tenant_bp.route('/backend/tenants/<int:tenant_id>', methods=['GET'])
 def get_tenant(tenant_id):
     query = "SELECT * FROM Tenant WHERE id = ?"
     result = query_db(query, (tenant_id,), one=True)
@@ -73,7 +100,7 @@ def get_tenant(tenant_id):
 
 
 # UPDATE an existing tenant
-@tenant_bp.route('/tenants/<int:tenant_id>', methods=['PUT'])
+@tenant_bp.route('/backend/tenants/<int:tenant_id>', methods=['PUT'])
 def update_tenant(tenant_id):
     data = request.json
     is_cooperative_member = data.get('is_cooperative_member')
@@ -96,7 +123,7 @@ def update_tenant(tenant_id):
 
 
 # DELETE a tenant
-@tenant_bp.route('/tenants/<int:tenant_id>', methods=['DELETE'])
+@tenant_bp.route('/backend/tenants/<int:tenant_id>', methods=['DELETE'])
 def delete_tenant(tenant_id):
     query = "DELETE FROM Tenant WHERE id = ?"
     result = query_db(query, (tenant_id,), commit=True)

@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 import sqlite3
+from datetime import datetime
 
 
 # Define the Blueprint
@@ -40,29 +41,17 @@ def create_contract():
     start_date = data.get('start_date')
     end_date = data.get('end_date')
 
-    # Optional details
-    apartment_id = data.get('apartment_id')  # Only for Apartment rental type
-    parking_id = data.get('parking_id')      # Only for ParkingSpot rental type
-    unit_id = data.get('unit_id')            # Only for Apartment rentals
-
-    
-    if not all([rental_type, start_date]):
-        return jsonify({"error": "Rental type and start date are required"}), 400
-
+    if not all([rental_type, rental_id, start_date]):
+        return jsonify({"error": "Rental type, rental ID, and start date are required"}), 400
 
     try:
         # If tenant_id is not provided, create a new tenant
         if not tenant_id:
             tenant_query = """
-            INSERT INTO Tenant (is_coroperative_member, apartment_id, parking_id)
-            VALUES (?, ?, ?)
+            INSERT INTO Tenant (is_coroperative_member)
+            VALUES (?)
             """
-            tenant_result = query_db(
-                tenant_query,
-                (is_cooperative_member, apartment_id if rental_type == "Apartment" else None, 
-                parking_id if rental_type == "ParkingSpot" else None),
-                commit=True
-            )
+            tenant_result = query_db(tenant_query, (is_cooperative_member,), commit=True)
 
             if "error" in tenant_result:
                 return jsonify(tenant_result), 500
@@ -73,44 +62,21 @@ def create_contract():
             tenant_id = tenant_id_result['tenant_id']
 
         # Validate rental type and associated IDs
-        rental_id = None  # Initialize rental_id
-
         if rental_type == "Apartment":
-            if not apartment_id:
-                return jsonify({"error": "Apartment ID is required for Apartment rental type"}), 400
-
-            # Validate apartment existence
-            apartment_check_query = "SELECT id FROM Apartment WHERE id = ?"
-            apartment_exists = query_db(apartment_check_query, (apartment_id,), one=True)
-            if not apartment_exists:
-                return jsonify({"error": f"Apartment ID {apartment_id} does not exist"}), 400
-
-            # Set rental_id to the apartment_id
-            rental_id = apartment_id
-
-            # Validate unit_id if provided
-            if unit_id:
-                unit_check_query = "SELECT id FROM Unit WHERE id = ?"
-                unit_exists = query_db(unit_check_query, (unit_id,), one=True)
-                if not unit_exists:
-                    return jsonify({"error": f"Unit ID {unit_id} does not exist"}), 400
-
+            rental_check_query = "SELECT id FROM Apartment WHERE id = ?"
         elif rental_type == "ParkingSpot":
-            if not parking_id:
-                return jsonify({"error": "Parking Spot ID is required for ParkingSpot rental type"}), 400
+            rental_check_query = "SELECT id FROM ParkingSpot WHERE id = ?"
+        else:
+            return jsonify({"error": f"Invalid rental type: {rental_type}"}), 400
 
-            # Validate parking spot existence
-            parking_check_query = "SELECT id FROM ParkingSpot WHERE id = ?"
-            parking_exists = query_db(parking_check_query, (parking_id,), one=True)
-            if not parking_exists:
-                return jsonify({"error": f"Parking Spot ID {parking_id} does not exist"}), 400
+        # Validate rental existence
+        rental_exists = query_db(rental_check_query, (rental_id,), one=True)
+        if not rental_exists:
+            return jsonify({"error": f"{rental_type} ID {rental_id} does not exist"}), 400
 
-            # Set rental_id to the parking_id
-            rental_id = parking_id
-
-        # Ensure rental_id is set
-        if rental_id is None:
-            return jsonify({"error": "Could not determine rental ID for the contract"}), 400
+        # Validate end date
+        if end_date and datetime.strptime(end_date, "%Y-%m-%d") < datetime.strptime(start_date, "%Y-%m-%d"):
+            return jsonify({"error": "End date cannot be earlier than start date"}), 400
 
         # Create the contract
         contract_query = """
@@ -126,11 +92,21 @@ def create_contract():
         if "error" in contract_result:
             return jsonify(contract_result), 500
 
-        return jsonify({"message": "Contract created successfully"}), 201
+        return jsonify({
+            "message": "Contract created successfully",
+            "contract": {
+                "tenant_id": tenant_id,
+                "rental_type": rental_type,
+                "rental_id": rental_id,
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        }), 201
 
     except Exception as e:
         print(f"Error occurred: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 
 

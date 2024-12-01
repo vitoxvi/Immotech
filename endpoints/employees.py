@@ -93,20 +93,22 @@ def create_employee():
 @employee_bp.route('/backend/employees', methods=['GET'])
 def get_all_employees():
     query = """
-    SELECT 
-        Employee.id AS employee_id, 
-        Employee.role, 
-        Employee.employment_rate, 
-        Person.first_name, 
-        Person.last_name, 
-        Person.date_of_birth, 
-        Person.address, 
-        Person.phone_number, 
-        Person.email, 
-        Person.bank_correspondence
-    FROM Employee
-    JOIN Person ON Employee.id = Person.id
-    """
+        SELECT 
+            Employee.id AS employee_id,
+            Employee.person_id,
+            Employee.role, 
+            Employee.employment_rate, 
+            Person.first_name, 
+            Person.last_name, 
+            Person.date_of_birth, 
+            Person.address, 
+            Person.phone_number, 
+            Person.email, 
+            Person.bank_correspondence
+        FROM Employee
+        JOIN Person ON Employee.person_id = Person.id
+        """
+
     result = query_db(query)
     if "error" in result:
         return jsonify(result), 500
@@ -121,21 +123,23 @@ def get_all_employees():
 @employee_bp.route('/backend/employees/<int:employee_id>', methods=['GET'])
 def get_employee(employee_id):
     query = """
-    SELECT 
-        Employee.id AS employee_id, 
-        Employee.role, 
-        Employee.employment_rate, 
-        Person.first_name, 
-        Person.last_name, 
-        Person.date_of_birth, 
-        Person.address, 
-        Person.phone_number, 
-        Person.email, 
-        Person.bank_correspondence
-    FROM Employee
-    JOIN Person ON Employee.id = Person.id
-    WHERE Employee.id = ?
-    """
+        SELECT 
+            Employee.id AS employee_id,
+            Employee.person_id,
+            Employee.role, 
+            Employee.employment_rate, 
+            Person.first_name, 
+            Person.last_name, 
+            Person.date_of_birth, 
+            Person.address, 
+            Person.phone_number, 
+            Person.email, 
+            Person.bank_correspondence
+        FROM Employee
+        JOIN Person ON Employee.person_id = Person.id
+        WHERE Employee.id = ?
+        """
+
     result = query_db(query, (employee_id,), one=True)
     if not result:
         return jsonify({"error": "Employee not found"}), 404

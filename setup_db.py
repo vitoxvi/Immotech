@@ -7,7 +7,7 @@ DATABASE_NAME = "database.db"
 SQL_SCHEMA = """
 PRAGMA foreign_keys = ON;
 
--- Table definitions (unchanged)
+-- Table definitions
 CREATE TABLE IF NOT EXISTS Person (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     first_name TEXT NOT NULL,
@@ -25,32 +25,31 @@ CREATE INDEX IF NOT EXISTS idx_last_name_first_name ON Person (last_name, first_
 CREATE INDEX IF NOT EXISTS idx_email ON Person (email);
 
 CREATE TABLE IF NOT EXISTS Employee (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    person_id INTEGER NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('Manager', 'Technician', 'Cleaner', 'Administrator', 'Accountant', 'Other')),
     employment_rate REAL NOT NULL CHECK (employment_rate > 0 AND employment_rate <= 100),
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (person_id) REFERENCES Person (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Tenant (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    person_id INTEGER NOT NULL,
     is_coroperative_member INTEGER NOT NULL CHECK (is_coroperative_member IN (0, 1)),
-    apartment_id INTEGER,
-    parking_id INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (apartment_id) REFERENCES Apartment (id) ON DELETE SET NULL,
-    FOREIGN KEY (parking_id) REFERENCES ParkingSpot (id) ON DELETE SET NULL
+    FOREIGN KEY (person_id) REFERENCES Person (id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_apartment_id ON Tenant (apartment_id);
-CREATE INDEX IF NOT EXISTS idx_parking_id ON Tenant (parking_id);
-
 CREATE TABLE IF NOT EXISTS BoardMember (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    person_id INTEGER NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('President', 'Vice-president', 'Secretary', 'Treasurer', 'Member')),
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (person_id) REFERENCES Person (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS VehicleUsageLog (
@@ -93,7 +92,6 @@ CREATE TABLE IF NOT EXISTS Property (
 
 CREATE INDEX IF NOT EXISTS idx_address ON Property (address);
 
-
 CREATE TABLE IF NOT EXISTS Unit (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT,
@@ -123,7 +121,6 @@ CREATE INDEX IF NOT EXISTS idx_unit_id ON Apartment (unit_id);
 CREATE INDEX IF NOT EXISTS idx_rent ON Apartment (rent);
 CREATE INDEX IF NOT EXISTS idx_rooms ON Apartment (rooms);
 
-
 CREATE TABLE IF NOT EXISTS ParkingSpot (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     rent REAL NOT NULL CHECK (rent >= 0),
@@ -151,82 +148,11 @@ CREATE TABLE IF NOT EXISTS Contract (
     FOREIGN KEY (tenant_id) REFERENCES Tenant (id) ON DELETE CASCADE
 );
 
-
 CREATE INDEX IF NOT EXISTS idx_tenant_id ON Contract (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_rental_id ON Contract (rental_id);
 CREATE INDEX IF NOT EXISTS idx_start_date_end_date ON Contract (start_date, end_date);
-
--- Triggers to update the updated_at timestamp
-CREATE TRIGGER IF NOT EXISTS update_person_timestamp
-AFTER UPDATE ON Person
-FOR EACH ROW
-BEGIN
-  UPDATE Person SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_employee_timestamp
-AFTER UPDATE ON Employee
-FOR EACH ROW
-BEGIN
-  UPDATE Employee SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_tenant_timestamp
-AFTER UPDATE ON Tenant
-FOR EACH ROW
-BEGIN
-  UPDATE Tenant SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_boardmember_timestamp
-AFTER UPDATE ON BoardMember
-FOR EACH ROW
-BEGIN
-  UPDATE BoardMember SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_vehicleusagelog_timestamp
-AFTER UPDATE ON VehicleUsageLog
-FOR EACH ROW
-BEGIN
-  UPDATE VehicleUsageLog SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_vehicle_timestamp
-AFTER UPDATE ON Vehicle
-FOR EACH ROW
-BEGIN
-  UPDATE Vehicle SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_property_timestamp
-AFTER UPDATE ON Property
-FOR EACH ROW
-BEGIN
-  UPDATE Property SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_apartment_timestamp
-AFTER UPDATE ON Apartment
-FOR EACH ROW
-BEGIN
-  UPDATE Apartment SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_parkingspot_timestamp
-AFTER UPDATE ON ParkingSpot
-FOR EACH ROW
-BEGIN
-  UPDATE ParkingSpot SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_contract_timestamp
-AFTER UPDATE ON Contract
-FOR EACH ROW
-BEGIN
-  UPDATE Contract SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
 """
+
 
 # Function to set up the database
 def setup_database():
