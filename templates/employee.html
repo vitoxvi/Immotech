@@ -3,83 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee CRUD Operations</title>
+    <title>Employee Management</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <h1>Employee Management</h1>
+    <main>
+        <header>
+            <h1>Employee Management</h1>
+        </header>
 
-    <!-- Create Employee -->
-    <h2>Create Employee</h2>
-    <form id="createEmployeeForm">
-        <!-- Person Fields -->
-        <label for="firstName">First Name:</label>
-        <input type="text" id="firstName" name="firstName" required><br>
+        <button onclick="window.location.href='/'" class="back-button">Go Back</button>
 
-        <label for="lastName">Last Name:</label>
-        <input type="text" id="lastName" name="lastName" required><br>
+        <!-- Create Employee -->
+        <h2>Create Employee</h2>
+        <form id="createEmployeeForm" class="form-style">
+            <!-- Person Fields -->
+            <label for="firstName">First Name:</label>
+            <input type="text" id="firstName" name="firstName" required><br>
 
-        <label for="dateOfBirth">Date of Birth:</label>
-        <input type="date" id="dateOfBirth" name="dateOfBirth"><br>
+            <label for="lastName">Last Name:</label>
+            <input type="text" id="lastName" name="lastName" required><br>
 
-        <label for="address">Address:</label>
-        <input type="text" id="address" name="address"><br>
+            <label for="dateOfBirth">Date of Birth:</label>
+            <input type="date" id="dateOfBirth" name="dateOfBirth"><br>
 
-        <label for="phoneNumber">Phone Number:</label>
-        <input type="text" id="phoneNumber" name="phoneNumber"><br>
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address"><br>
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email"><br>
+            <label for="phoneNumber">Phone Number:</label>
+            <input type="text" id="phoneNumber" name="phoneNumber"><br>
 
-        <label for="bankCorrespondence">Bank Correspondence:</label>
-        <input type="text" id="bankCorrespondence" name="bankCorrespondence"><br>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email"><br>
 
-        <!-- Employee Fields -->
-        <label for="role">Role:</label>
-        <input type="text" id="role" name="role" required><br>
+            <label for="bankCorrespondence">Bank Correspondence:</label>
+            <input type="text" id="bankCorrespondence" name="bankCorrespondence"><br>
 
-        <label for="employmentRate">Employment Rate (%):</label>
-        <input type="number" id="employmentRate" name="employmentRate" min="1" max="100" required><br>
+            <!-- Employee Fields -->
+            <label for="role">Role:</label>
+            <input type="text" id="role" name="role" required><br>
 
-        <button type="submit">Create Employee</button>
-    </form>
-    <div id="createEmployeeResult"></div>
+            <label for="employmentRate">Employment Rate (%):</label>
+            <input type="number" id="employmentRate" name="employmentRate" min="1" max="100" required><br>
 
-    <hr>
+            <button type="submit" class="primary-button">Create Employee</button>
+        </form>
+        <div id="createEmployeeResult" class="result-style"></div>
 
-    <!-- Read Employees -->
-    <h2>View Employees</h2>
-    <button id="viewEmployeesButton">View All Employees</button>
-    <div id="employeeList"></div>
+        <hr>
 
-    <hr>
+        <!-- Read Employees -->
+        <h2>View Employees</h2>
+        <button id="viewEmployeesButton" class="primary-button">View All Employees</button>
+        <div id="employeeList" class="list-style"></div>
 
-    <!-- Update Employee -->
-    <h2>Update Employee</h2>
-    <form id="updateEmployeeForm">
-        <label for="updateEmployeeId">Employee ID:</label>
-        <input type="number" id="updateEmployeeId" name="updateEmployeeId" min="1" required><br>
+        <hr>
 
-        <label for="updateRole">Role:</label>
-        <input type="text" id="updateRole" name="updateRole" ><br>
+        <!-- Update Employee -->
+        <h2>Update Employee</h2>
+        <form id="updateEmployeeForm" class="form-style">
+            <label for="updateEmployeeId">Employee ID:</label>
+            <input type="number" id="updateEmployeeId" name="updateEmployeeId" min="1" required><br>
 
-        <label for="updateEmploymentRate">Employment Rate (%):</label>
-        <input type="number" id="updateEmploymentRate" name="updateEmploymentRate" min="1" max="100"><br>
+            <label for="updateRole">Role:</label>
+            <input type="text" id="updateRole" name="updateRole"><br>
 
-        <button type="submit">Update Employee</button>
-    </form>
-    <div id="updateEmployeeResult"></div>
+            <label for="updateEmploymentRate">Employment Rate (%):</label>
+            <input type="number" id="updateEmploymentRate" name="updateEmploymentRate" min="1" max="100"><br>
 
-    <hr>
+            <button type="submit" class="primary-button">Update Employee</button>
+        </form>
+        <div id="updateEmployeeResult" class="result-style"></div>
 
-    <!-- Delete Employee -->
-    <h2>Delete Employee</h2>
-    <form id="deleteEmployeeForm">
-        <label for="deleteEmployeeId">Employee ID:</label>
-        <input type="number" id="deleteEmployeeId" name="deleteEmployeeId" min="1" required>
-        <button type="submit">Delete Employee</button>
-    </form>
-    <div id="deleteEmployeeResult"></div>
+        <hr>
 
+        <!-- Delete Employee -->
+        <h2>Delete Employee</h2>
+        <form id="deleteEmployeeForm" class="form-style">
+            <label for="deleteEmployeeId">Employee ID:</label>
+            <input type="number" id="deleteEmployeeId" name="deleteEmployeeId" min="1" required>
+            <button type="submit" class="primary-button">Delete Employee</button>
+        </form>
+        <div id="deleteEmployeeResult" class="result-style"></div>
+    </main>
     <script>
         const EMPLOYEE_API = 'backend/employees';
 
@@ -114,14 +120,41 @@
 
         // View Employees
         document.getElementById('viewEmployeesButton').addEventListener('click', async () => {
-            try {
-                const response = await fetch(EMPLOYEE_API);
-                const data = await response.json();
-                document.getElementById('employeeList').innerText = JSON.stringify(data, null, 2);
-            } catch (error) {
-                document.getElementById('employeeList').innerText = `Error: ${error}`;
-            }
+    const employeeList = document.getElementById('employeeList');
+    employeeList.innerHTML = ''; // Clear previous content
+
+    try {
+        const response = await fetch(EMPLOYEE_API);
+        const data = await response.json();
+
+        if (data.length === 0) {
+            employeeList.innerHTML = '<p>No employees found.</p>';
+            return;
+        }
+
+        data.forEach((employee) => {
+            const employeeDiv = document.createElement('div');
+            employeeDiv.classList.add('result-style'); // Use existing CSS class for styling
+            employeeDiv.innerHTML = `
+                <strong>ID:</strong> ${employee.id}<br>
+                <strong>First Name:</strong> ${employee.first_name}<br>
+                <strong>Last Name:</strong> ${employee.last_name}<br>
+                <strong>Date of Birth:</strong> ${employee.date_of_birth || 'N/A'}<br>
+                <strong>Address:</strong> ${employee.address || 'N/A'}<br>
+                <strong>Phone Number:</strong> ${employee.phone_number || 'N/A'}<br>
+                <strong>Email:</strong> ${employee.email || 'N/A'}<br>
+                <strong>Bank Correspondence:</strong> ${employee.bank_correspondence || 'N/A'}<br>
+                <strong>Role:</strong> ${employee.role}<br>
+                <strong>Employment Rate:</strong> ${employee.employment_rate}%<br>
+                <hr>
+            `;
+            employeeList.appendChild(employeeDiv);
         });
+    } catch (error) {
+        employeeList.innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
+    }
+});
+
 
         // Update Employee
         document.getElementById('updateEmployeeForm').addEventListener('submit', async (e) => {

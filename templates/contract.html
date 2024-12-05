@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contract Management</title>
+    <link rel="stylesheet" href="/static/styles.css">
     <script>
         const CONTRACT_API = '/backend/contracts';
 
@@ -97,18 +98,27 @@
     </script>
 </head>
 <body>
-    <h1>Contract Management</h1>
+    <main>
+        <header>
+            <h1>Contract Management</h1>
+        </header>
 
-    <!-- Filter Contracts -->
-    <h2>View Contracts</h2>
-    <label for="rentalTypeFilter">Filter by Rental Type:</label>
-    <select id="rentalTypeFilter" name="rentalTypeFilter">
-        <option value="">All</option>
-        <option value="Apartment">Apartment</option>
-        <option value="ParkingSpot">Parking Spot</option>
-    </select>
-    <button onclick="fetchContracts()">Fetch Contracts</button>
+        <button onclick="window.location.href='/'" class="back-button">Go Back</button>
 
-    <div id="contractList"></div>
+        <!-- Filter Contracts -->
+        <h2>View Contracts</h2>
+        <form class="form-style">
+            <label for="rentalTypeFilter">Filter by Rental Type:</label>
+            <select id="rentalTypeFilter" name="rentalTypeFilter">
+                <option value="">All</option>
+                <option value="Apartment">Apartment</option>
+                <option value="ParkingSpot">Parking Spot</option>
+            </select>
+            <button type="button" onclick="fetchContracts()" class="primary-button">Fetch Contracts</button>
+        </form>
+
+        <div id="contractList" class="result-style"></div>
+    </main>
 </body>
 </html>
+
