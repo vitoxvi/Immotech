@@ -1,58 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unit Management</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
+
 <body>
-    <h1>Unit Management</h1>
+    <main>
+        <header>
+            <h1>Unit Management</h1>
+        </header>
 
-    <!-- Create Unit -->
-    <h2>Create Unit</h2>
-    <form id="createUnitForm">
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required><br>
+        <button onclick="window.location.href='/'" class="back-button">Go Back</button>
 
-        <label for="address">Address:</label>
-        <input type="text" id="address" name="address" required><br>
+        <!-- Create Unit -->
+        <h2>Create Unit</h2>
+        <form id="createUnitForm" class="form-style">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required><br>
 
-        <label for="propertyId">Property ID:</label>
-        <input type="number" id="propertyId" name="propertyId" required><br>
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address" required><br>
 
-        <button type="submit">Create Unit</button>
-    </form>
-    <div id="createResult"></div>
+            <label for="propertyId">Property ID:</label>
+            <input type="number" id="propertyId" name="propertyId" required><br>
 
-    <hr>
+            <button type="submit" class="primary-button">Create Unit</button>
+        </form>
+        <div id="createResult" class="result-style"></div>
 
-    <!-- View Units -->
-    <h2>View Units</h2>
-    <label for="propertyIdFilter">Filter by Property ID (Leave blank for all):</label>
-    <input type="number" id="propertyIdFilter" name="propertyIdFilter">
-    <button id="viewUnitsButton">View Units</button>
-    <div id="unitsList"></div>
+        <hr>
 
-    <hr>
+        <!-- View Units -->
+        <h2>View Units</h2>
+        <form class="form-style">
+            <label for="propertyIdFilter">Filter by Property ID:</label>
+            <input type="number" id="propertyIdFilter" name="propertyIdFilter"><br>
+            <button id="viewUnitsButton" class="primary-button">View Units</button>
+        </form>
+        <div id="unitsList" class="list-style"></div>
 
-    <!-- Update Unit -->
-    <h2>Update Unit</h2>
-    <form id="updateUnitForm">
-        <label for="updateId">Unit ID:</label>
-        <input type="number" id="updateId" name="updateId" required><br>
+        <hr>
 
-        <label for="updateName">Name:</label>
-        <input type="text" id="updateName" name="updateName" required><br>
+        <!-- Update Unit -->
+        <h2>Update Unit</h2>
+        <form id="updateUnitForm" class="form-style">
+            <label for="updateId">Unit ID:</label>
+            <input type="number" id="updateId" name="updateId" required><br>
 
-        <label for="updateAddress">Address:</label>
-        <input type="text" id="updateAddress" name="updateAddress" required><br>
+            <label for="updateName">Name:</label>
+            <input type="text" id="updateName" name="updateName" required><br>
 
-        <label for="updatePropertyId">Property ID:</label>
-        <input type="number" id="updatePropertyId" name="updatePropertyId" required><br>
+            <label for="updateAddress">Address:</label>
+            <input type="text" id="updateAddress" name="updateAddress" required><br>
 
-        <button type="submit">Update Unit</button>
-    </form>
-    <div id="updateResult"></div>
+            <label for="updatePropertyId">Property ID:</label>
+            <input type="number" id="updatePropertyId" name="updatePropertyId" required><br>
+
+            <button type="submit" class="primary-button">Update Unit</button>
+        </form>
+        <div id="updateResult" class="result-style"></div>
+    </main>
 
     <script>
         const UNIT_API = '/backend/units';
@@ -73,51 +84,53 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
                 const data = await response.json();
-                document.getElementById('createResult').innerText = JSON.stringify(data, null, 2);
+                document.getElementById('createResult').innerHTML = `<p>Unit Created:</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (error) {
-                document.getElementById('createResult').innerText = `Error: ${error}`;
+                document.getElementById('createResult').innerHTML = `<p class="result-style">Error: ${error}</p>`;
             }
         });
 
         // View Units
-        document.getElementById('viewUnitsButton').addEventListener('click', async () => {
+        document.getElementById('viewUnitsButton').addEventListener('click', async (e) => {
+            e.preventDefault();  // Prevent page reload on button click
+
             const propertyId = document.getElementById('propertyIdFilter').value;
             const url = propertyId ? `${UNIT_API}?property_id=${propertyId}` : UNIT_API;
 
             try {
                 const response = await fetch(url);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
                 const data = await response.json();
-                const unitsListDiv = document.getElementById('unitsList');
-                unitsListDiv.innerHTML = ''; // Clear previous content
-
-                data.forEach(unit => {
-                    const unitInfo = `
-                        <div>
-                            <strong>ID:</strong> ${unit.id}<br>
-                            <strong>Name:</strong> ${unit.name}<br>
-                            <strong>Address:</strong> ${unit.address}<br>
-                            <strong>Property ID:</strong> ${unit.property_id}<br>
-                            <button onclick="deleteUnit(${unit.id})">Delete</button>
-                            <hr>
-                        </div>
-                    `;
-                    unitsListDiv.innerHTML += unitInfo;
-                });
+                displayUnits(data);
             } catch (error) {
-                document.getElementById('unitsList').innerText = `Error: ${error}`;
+                document.getElementById('unitsList').innerHTML = `<p class="result-style">Error: ${error}</p>`;
             }
         });
+
+
+        // Display Units
+        function displayUnits(units) {
+            const unitsListDiv = document.getElementById('unitsList');
+            unitsListDiv.innerHTML = ''; // Clear previous content
+
+            if (!units.length) {
+                unitsListDiv.innerHTML = '<p class="result-style">No units found.</p>';
+                return;
+            }
+
+            units.forEach(unit => {
+                const unitDiv = document.createElement('div');
+                unitDiv.classList.add('result-style');
+                unitDiv.innerHTML = `
+                    <strong>ID:</strong> ${unit.id}<br>
+                    <strong>Name:</strong> ${unit.name}<br>
+                    <strong>Address:</strong> ${unit.address}<br>
+                    <strong>Property ID:</strong> ${unit.property_id}<br>
+                    <button class="primary-button" onclick="deleteUnit(${unit.id})">Delete</button>
+                `;
+                unitsListDiv.appendChild(unitDiv);
+            });
+        }
 
         // Delete Unit
         async function deleteUnit(unitId) {
@@ -159,18 +172,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
                 const data = await response.json();
-                document.getElementById('updateResult').innerText = JSON.stringify(data, null, 2);
+                document.getElementById('updateResult').innerHTML = `<p>Unit Updated:</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
                 document.getElementById('viewUnitsButton').click(); // Refresh the list
             } catch (error) {
-                document.getElementById('updateResult').innerText = `Error: ${error}`;
+                document.getElementById('updateResult').innerHTML = `<p class="result-style">Error: ${error}</p>`;
             }
         });
     </script>
 </body>
+
 </html>

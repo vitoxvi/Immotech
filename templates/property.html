@@ -4,53 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Property Management</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <h1>Property Management</h1>
+    <main>
+        <header>
+            <h1>Property Management</h1>
+        </header>
 
-    <!-- Create Property -->
-    <h2>Create Property</h2>
-    <form id="createPropertyForm">
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required><br>
+        <button onclick="window.location.href='/'" class="back-button">Go Back</button>
 
-        <label for="address">Address:</label>
-        <input type="text" id="address" name="address" required><br>
+        <!-- Create Property -->
+        <h2>Create Property</h2>
+        <form id="createPropertyForm" class="form-style">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required><br>
 
-        <label for="propertyDocument">Property Document (Optional):</label>
-        <input type="text" id="propertyDocument" name="propertyDocument"><br>
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address" required><br>
 
-        <button type="submit">Create Property</button>
-    </form>
-    <div id="createResult"></div>
+            <label for="propertyDocument">Property Document (Optional):</label>
+            <input type="text" id="propertyDocument" name="propertyDocument"><br>
 
-    <hr>
+            <button type="submit" class="primary-button">Create Property</button>
+        </form>
+        <div id="createResult" class="result-style"></div>
 
-    <!-- View Properties -->
-    <h2>View Properties</h2>
-    <button id="viewPropertiesButton">View All Properties</button>
-    <div id="propertiesList"></div>
+        <hr>
 
-    <hr>
+        <!-- View Properties -->
+        <h2>View Properties</h2>
+        <button id="viewPropertiesButton" class="primary-button">View All Properties</button>
+        <div id="propertiesList" class="list-style"></div>
 
-    <!-- Update Property -->
-    <h2>Update Property</h2>
-    <form id="updatePropertyForm">
-        <label for="updateId">Property ID:</label>
-        <input type="number" id="updateId" name="updateId" required><br>
+        <hr>
 
-        <label for="updateName">Name:</label>
-        <input type="text" id="updateName" name="updateName" required><br>
+        <!-- Update Property -->
+        <h2>Update Property</h2>
+        <form id="updatePropertyForm" class="form-style">
+            <label for="updateId">Property ID:</label>
+            <input type="number" id="updateId" name="updateId" required><br>
 
-        <label for="updateAddress">Address:</label>
-        <input type="text" id="updateAddress" name="updateAddress" required><br>
+            <label for="updateName">Name:</label>
+            <input type="text" id="updateName" name="updateName" required><br>
 
-        <label for="updateDocument">Property Document (Optional):</label>
-        <input type="text" id="updateDocument" name="updateDocument"><br>
+            <label for="updateAddress">Address:</label>
+            <input type="text" id="updateAddress" name="updateAddress" required><br>
 
-        <button type="submit">Update Property</button>
-    </form>
-    <div id="updateResult"></div>
+            <label for="updateDocument">Property Document (Optional):</label>
+            <input type="text" id="updateDocument" name="updateDocument"><br>
+
+            <button type="submit" class="primary-button">Update Property</button>
+        </form>
+        <div id="updateResult" class="result-style"></div>
+    </main>
 
     <script>
         const PROPERTY_API = '/backend/properties';
@@ -72,45 +79,41 @@
                     body: JSON.stringify(payload)
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
                 const data = await response.json();
-                document.getElementById('createResult').innerText = JSON.stringify(data, null, 2);
+                document.getElementById('createResult').innerHTML = `<p>Property Created:</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (error) {
-                document.getElementById('createResult').innerText = `Error: ${error}`;
+                document.getElementById('createResult').innerHTML = `<p class="result-style">Error: ${error}</p>`;
             }
         });
 
         // View Properties
         document.getElementById('viewPropertiesButton').addEventListener('click', async () => {
+            const propertiesListDiv = document.getElementById('propertiesList');
+            propertiesListDiv.innerHTML = ''; // Clear previous content
+
             try {
                 const response = await fetch(PROPERTY_API);
+                const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                if (data.length === 0) {
+                    propertiesListDiv.innerHTML = '<p>No properties found.</p>';
+                    return;
                 }
 
-                const data = await response.json();
-                const propertiesListDiv = document.getElementById('propertiesList');
-                propertiesListDiv.innerHTML = ''; // Clear previous content
-
                 data.forEach(property => {
-                    const propertyInfo = `
-                        <div>
-                            <strong>ID:</strong> ${property.id}<br>
-                            <strong>Name:</strong> ${property.name}<br>
-                            <strong>Address:</strong> ${property.address}<br>
-                            <strong>Document:</strong> ${property.property_document || 'None'}<br>
-                            <button onclick="deleteProperty(${property.id})">Delete</button>
-                            <hr>
-                        </div>
+                    const propertyDiv = document.createElement('div');
+                    propertyDiv.classList.add('result-style'); // Use existing CSS for styling
+                    propertyDiv.innerHTML = `
+                        <strong>ID:</strong> ${property.id}<br>
+                        <strong>Name:</strong> ${property.name}<br>
+                        <strong>Address:</strong> ${property.address}<br>
+                        <strong>Document:</strong> ${property.property_document || 'None'}<br>
+                        <button class="primary-button" onclick="deleteProperty(${property.id})">Delete</button>
                     `;
-                    propertiesListDiv.innerHTML += propertyInfo;
+                    propertiesListDiv.appendChild(propertyDiv);
                 });
             } catch (error) {
-                document.getElementById('propertiesList').innerText = `Error: ${error}`;
+                propertiesListDiv.innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
             }
         });
 
@@ -124,10 +127,6 @@
                 const response = await fetch(`${PROPERTY_API}/${propertyId}`, {
                     method: 'DELETE',
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
 
                 const data = await response.json();
                 alert(data.message || 'Property deleted successfully!');
@@ -155,15 +154,11 @@
                     body: JSON.stringify(payload)
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
                 const data = await response.json();
-                document.getElementById('updateResult').innerText = JSON.stringify(data, null, 2);
+                document.getElementById('updateResult').innerHTML = `<p>Property Updated:</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
                 document.getElementById('viewPropertiesButton').click(); // Refresh the list
             } catch (error) {
-                document.getElementById('updateResult').innerText = `Error: ${error}`;
+                document.getElementById('updateResult').innerHTML = `<p class="result-style">Error: ${error}</p>`;
             }
         });
     </script>

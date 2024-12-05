@@ -38,6 +38,10 @@ def vehicle_usage_logs():
 def contracts():
     return render_template('contract.html')
 
+@app.route('/tenants')
+def tenants():
+    return render_template('tenant.html')
+
 @app.route('/parking_spots')
 def parking_spots():
     return render_template('parking_spot.html')

@@ -1,29 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IMMOTECH Database Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body>
+
+<body
+    style="background: url('{{ url_for('static', filename='background.jpg') }}') no-repeat center center fixed; background-size: cover;">
+
     <header>
         <h1>Welcome to IMMOTECH ERP</h1>
     </header>
-    <main>
-        <p>Use the navigation menu to access different features:</p>
+    <main class="dashboard-menu">
+        <p>Click to access the following pages:</p>
         <ul>
-            <li><a href="/vehicles">Vehicles</a></li>
-            <li><a href="/employees">Employees</a></li>
-            <li><a href="/boardmembers">Board members</a></li>
-            <li><a href="/vehicle-usage-logs">Vehicle usage logs</a></li>
-            <li><a href ="/contracts">Contracts & Tenants</a></li>
-            <li><a href="/parking_spots">Parking spots</a></li>
+            <li><a href="/contracts">Contracts</a></li>
             <li><a href="/properties">Properties</a></li>
             <li><a href="/appartments">Appartments</a></li>
             <li><a href="/units">Units</a></li>
+            <li><a href="/parking_spots">Parking Spots</a></li>
+            <li><a href="/boardmembers">Board Members</a></li>
+            <li><a href="/employees">Employees</a></li>
+            <li><a href="/tenants">Tenants</a></li>
+            <li><a href="/vehicles">Vehicles</a></li>
+            <li><a href="/vehicle-usage-logs">Vehicle Usage Logs</a></li>
         </ul>
     </main>
 </body>
+
 </html>
-
-
