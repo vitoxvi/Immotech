@@ -30,7 +30,6 @@ def query_db(query, args=(), one=False, commit=False, fetch_last_id=False):
 
 
 
-#create a new contract
 @contract_bp.route('/backend/contracts', methods=['POST'])
 def create_contract():
     data = request.json
@@ -68,7 +67,7 @@ def create_contract():
                 person_query,
                 (first_name, last_name, date_of_birth, address, phone_number, email),
                 commit=True,
-                return_last_id=True
+                fetch_last_id=True
             )
 
             if "error" in person_result:
@@ -87,7 +86,7 @@ def create_contract():
                 tenant_query,
                 (person_id, is_cooperative_member),
                 commit=True,
-                return_last_id=True
+                fetch_last_id=True
             )
 
             if "error" in tenant_result:
@@ -141,6 +140,7 @@ def create_contract():
     except Exception as e:
         print(f"Error occurred: {e}")
         return jsonify({"error": str(e)}), 500
+
     
 
 # READ all contracts with person details
