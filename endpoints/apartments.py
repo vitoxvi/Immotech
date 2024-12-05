@@ -24,7 +24,7 @@ def query_db(query, args=(), one=False, commit=False):
     return (result[0] if result else None) if one and not commit else result
 
 # CREATE a new apartment
-@apartment_bp.route('/apartments', methods=['POST'])
+@apartment_bp.route('/backend/apartments', methods=['POST'])
 def create_apartment():
     data = request.json
     size_sqm = data.get('size_sqm')
@@ -49,7 +49,7 @@ def create_apartment():
 
 
 # READ all apartments
-@apartment_bp.route('/apartments', methods=['GET'])
+@apartment_bp.route('/backend/apartments', methods=['GET'])
 def get_all_apartments():
     query = "SELECT * FROM Apartment"
     result = query_db(query)
@@ -61,7 +61,7 @@ def get_all_apartments():
 
 
 # READ a single apartment by ID
-@apartment_bp.route('/apartments/<int:apartment_id>', methods=['GET'])
+@apartment_bp.route('/backend/apartments/<int:apartment_id>', methods=['GET'])
 def get_apartment(apartment_id):
     query = "SELECT * FROM Apartment WHERE id = ?"
     result = query_db(query, (apartment_id,), one=True)
@@ -72,7 +72,7 @@ def get_apartment(apartment_id):
 
 
 # UPDATE an existing apartment
-@apartment_bp.route('/apartments/<int:apartment_id>', methods=['PUT'])
+@apartment_bp.route('/backend/apartments/<int:apartment_id>', methods=['PUT'])
 def update_apartment(apartment_id):
     data = request.json
     size_sqm = data.get('size_sqm')
@@ -98,7 +98,7 @@ def update_apartment(apartment_id):
 
 
 # DELETE an apartment
-@apartment_bp.route('/apartments/<int:apartment_id>', methods=['DELETE'])
+@apartment_bp.route('/backend/apartments/<int:apartment_id>', methods=['DELETE'])
 def delete_apartment(apartment_id):
     query = "DELETE FROM Apartment WHERE id = ?"
     result = query_db(query, (apartment_id,), commit=True)
