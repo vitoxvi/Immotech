@@ -7,9 +7,8 @@ def populate_database():
     cursor = connection.cursor()
 
     try:
-        # Enable foreign key constraints and logging
+        # Enable foreign key constraints
         cursor.execute("PRAGMA foreign_keys = ON;")
-        cursor.execute("PRAGMA foreign_key_check;")
 
         # Populate the Person table
         cursor.executemany("""
@@ -27,25 +26,38 @@ def populate_database():
         carol_id = cursor.execute("SELECT id FROM Person WHERE first_name = 'Carol'").fetchone()[0]
 
         # Populate the Employee table
-        cursor.execute("""
+        cursor.executemany("""
             INSERT INTO Employee (person_id, role, employment_rate)
             VALUES (?, ?, ?);
-        """, (alice_id, "Manager", 100))
+        """, [
+            (alice_id, "Manager", 100),
+            (bob_id, "Technician", 80),
+            (carol_id, "Cleaner", 50),
+        ])
 
         # Populate the Tenant table
-        cursor.execute("""
+        cursor.executemany("""
             INSERT INTO Tenant (person_id, is_coroperative_member)
             VALUES (?, ?);
-        """, (bob_id, 1))
+        """, [
+            (alice_id, 1),
+            (bob_id, 0),
+            (carol_id, 1),
+        ])
 
-        # Get tenant ID
-        tenant_id = cursor.execute("SELECT id FROM Tenant WHERE person_id = ?", (bob_id,)).fetchone()[0]
+        # Get tenant IDs for references
+        alice_tenant_id = cursor.execute("SELECT id FROM Tenant WHERE person_id = ?", (alice_id,)).fetchone()[0]
+        bob_tenant_id = cursor.execute("SELECT id FROM Tenant WHERE person_id = ?", (bob_id,)).fetchone()[0]
 
         # Populate the BoardMember table
-        cursor.execute("""
+        cursor.executemany("""
             INSERT INTO BoardMember (person_id, role)
             VALUES (?, ?);
-        """, (carol_id, "President"))
+        """, [
+            (alice_id, "President"),
+            (bob_id, "Treasurer"),
+            (carol_id, "Secretary"),
+        ])
 
         # Populate the Property table
         cursor.executemany("""
@@ -54,38 +66,51 @@ def populate_database():
         """, [
             ("Downtown Apartments", "123 City Center", None),
             ("Greenwood Complex", "456 Suburb Lane", None),
+            ("Skyline Towers", "789 Metro Blvd", None),
         ])
 
         # Get property IDs for references
         downtown_id = cursor.execute("SELECT id FROM Property WHERE name = 'Downtown Apartments'").fetchone()[0]
+        greenwood_id = cursor.execute("SELECT id FROM Property WHERE name = 'Greenwood Complex'").fetchone()[0]
 
         # Populate the Unit table
         cursor.executemany("""
             INSERT INTO Unit (name, address, property_id)
             VALUES (?, ?, ?);
         """, [
-            ("Unit A", "Unit A Address", downtown_id),
+            ("Unit A", "123 City Center - Unit A", downtown_id),
+            ("Unit B", "123 City Center - Unit B", downtown_id),
+            ("Unit C", "456 Suburb Lane - Unit C", greenwood_id),
         ])
 
-        # Get unit ID for references
+        # Get unit IDs for references
         unit_a_id = cursor.execute("SELECT id FROM Unit WHERE name = 'Unit A'").fetchone()[0]
 
         # Populate the Apartment table
-        cursor.execute("""
-            INSERT INTO Apartment (size_sqm, rent, rooms, designation, unit_number, unit_id)
-            VALUES (?, ?, ?, ?, ?, ?);
-        """, ("50 sqm", 1200, 2, "Apartment 101", "101", unit_a_id))
+        cursor.executemany("""
+            INSERT INTO Apartment (size_sqm, rent, rooms, designation, unit_id)
+            VALUES (?, ?, ?, ?, ?);
+        """, [
+            ("50 sqm", 1200, 2, "Apartment 101", unit_a_id),
+            ("75 sqm", 1800, 3, "Apartment 102", unit_a_id),
+            ("35 sqm", 800, 1, "Apartment 103", unit_a_id),
+        ])
 
-        # Get apartment ID for references
+        # Get apartment IDs for references
         apartment_101_id = cursor.execute("SELECT id FROM Apartment WHERE designation = 'Apartment 101'").fetchone()[0]
+        apartment_102_id = cursor.execute("SELECT id FROM Apartment WHERE designation = 'Apartment 102'").fetchone()[0]
 
         # Populate the ParkingSpot table
-        cursor.execute("""
+        cursor.executemany("""
             INSERT INTO ParkingSpot (rent, spot_number, type, property_id)
             VALUES (?, ?, ?, ?);
-        """, (100, "P1", "Motorbike", downtown_id))
+        """, [
+            (100, "P1", "Motorbike", downtown_id),
+            (150, "P2", "Indoor", downtown_id),
+            (50, "P3", "Outdoor", greenwood_id),
+        ])
 
-        # Get parking spot ID for references
+        # Get parking spot IDs for references
         parking_spot_p1_id = cursor.execute("SELECT id FROM ParkingSpot WHERE spot_number = 'P1'").fetchone()[0]
 
         # Populate the Contract table
@@ -93,8 +118,9 @@ def populate_database():
             INSERT INTO Contract (tenant_id, rental_type, rental_id, start_date, end_date, is_deleted)
             VALUES (?, ?, ?, ?, ?, ?);
         """, [
-            (tenant_id, "Apartment", apartment_101_id, "2023-01-01", "2024-01-01", 0),
-            (tenant_id, "ParkingSpot", parking_spot_p1_id, "2023-01-01", "2024-01-01", 0),
+            (alice_tenant_id, "Apartment", apartment_101_id, "2023-01-01", "2024-01-01", 0),
+            (alice_tenant_id, "Apartment", apartment_102_id, "2023-02-01", None, 0),
+            (bob_tenant_id, "ParkingSpot", parking_spot_p1_id, "2023-03-01", "2024-03-01", 0),
         ])
 
         connection.commit()
