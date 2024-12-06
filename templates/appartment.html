@@ -12,14 +12,9 @@
     <main>
         <header>
             <h1>Apartment Management</h1>
-        </header>    
-    
+        </header>
+
         <button onclick="window.location.href='/'" class="back-button">Go Back</button>
-        
-    <!-- Create Apartment -->
-    <form id="createApartmentForm">
-        <label for="sizeSqm">Size (sqm):</label>
-        <input type="text" id="sizeSqm" name="sizeSqm" required><br> <!-- Ensure this is a string -->
 
         <!-- Create Apartment -->
         <h2>Create Apartment</h2>
@@ -30,13 +25,14 @@
             <label for="rent">Rent:</label>
             <input type="number" id="rent" name="rent" required><br>
 
-        <label for="unitId">Unit ID:</label>
-        <input type="number" id="unitId" name="unitId" required><br> <!-- Updated to use unit ID -->
+            <label for="rooms">Rooms:</label>
+            <input type="number" id="rooms" name="rooms"><br>
 
+            <label for="unitId">Unit ID:</label>
+            <input type="number" id="unitId" name="unitId" required><br>
 
             <label for="propertyId">Property ID:</label>
             <input type="number" id="propertyId" name="propertyId" required><br>
-
 
             <button type="submit" class="primary-button">Create Apartment</button>
         </form>
@@ -51,33 +47,27 @@
         <button id="viewApartmentsButton" class="primary-button">View Apartments</button>
         <div id="apartmentsList" class="list-style"></div>
 
-        <hr>
-
-        <!-- Update Apartment -->
-        <h2>Update Apartment</h2>
-        <form id="updateApartmentForm" class="form-style">
-            <label for="updateId">Apartment ID:</label>
-            <input type="number" id="updateId" name="updateId" required><br>
-
-            <label for="updateSizeSqm">Size (sqm):</label>
-            <input type="number" id="updateSizeSqm" name="updateSizeSqm" required><br>
-
-            <label for="updateRent">Rent:</label>
-            <input type="number" id="updateRent" name="updateRent" required><br>
-
-            <label for="updateRooms">Rooms:</label>
-            <input type="number" id="updateRooms" name="updateRooms"><br>
-
-
-        <label for="updatePropertyId">Property ID:</label>
-        <input type="number" id="updatePropertyId" name="updatePropertyId" required><br>
-
-            <label for="updatePropertyId">Property ID:</label>
-            <input type="number" id="updatePropertyId" name="updatePropertyId" required><br>
-
-            <button type="submit" class="primary-button">Update Apartment</button>
-        </form>
-        <div id="updateResult" class="result-style"></div>
+        <!-- Update Apartment Dialog -->
+        <div id="updateApartmentDialog" class="dialog" style="display: none;">
+            <div class="dialog-content">
+                <h2>Update Apartment</h2>
+                <form id="updateApartmentForm">
+                    <input type="hidden" id="updateApartmentId">
+                    <label for="updateSizeSqm">Size (sqm):</label>
+                    <input type="number" id="updateSizeSqm" required><br>
+                    <label for="updateRent">Rent:</label>
+                    <input type="number" id="updateRent" required><br>
+                    <label for="updateRooms">Rooms:</label>
+                    <input type="number" id="updateRooms"><br>
+                    <label for="updateUnitId">Unit ID:</label>
+                    <input type="number" id="updateUnitId" required><br>
+                    <label for="updatePropertyId">Property ID:</label>
+                    <input type="number" id="updatePropertyId" disabled><br> <!-- Make non-editable -->
+                    <button type="submit" class="primary-button">Update</button>
+                    <button type="button" onclick="closeUpdateDialog()" class="secondary-button">Cancel</button>
+                </form>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -90,17 +80,16 @@
             const payload = {
                 size_sqm: document.getElementById('sizeSqm').value,
                 rent: document.getElementById('rent').value,
-                rooms: document.getElementById('rooms').value || 0, // Default to 0 if not provided
+                rooms: document.getElementById('rooms').value || 0,
                 unit_id: document.getElementById('unitId').value,
+                property_id: document.getElementById('propertyId').value,
             };
-
-            console.log("Payload:", payload);
 
             try {
                 const response = await fetch(APARTMENT_API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
                 });
 
                 if (!response.ok) {
@@ -114,11 +103,12 @@
             }
         });
 
-
         // View Apartments
         document.getElementById('viewApartmentsButton').addEventListener('click', async () => {
             const propertyId = document.getElementById('propertyIdFilter').value;
             const url = propertyId ? `${APARTMENT_API}?property_id=${propertyId}` : APARTMENT_API;
+            const apartmentsListDiv = document.getElementById('apartmentsList');
+            apartmentsListDiv.innerHTML = ''; // Clear previous content
 
             try {
                 const response = await fetch(url);
@@ -128,26 +118,96 @@
                 }
 
                 const data = await response.json();
-                const apartmentsListDiv = document.getElementById('apartmentsList');
-                apartmentsListDiv.innerHTML = ''; // Clear previous content
 
-                data.forEach(apartment => {
-                    const apartmentInfo = `
-                        <div>
-                            <strong>ID:</strong> ${apartment.id}<br>
-                            <strong>Size (sqm):</strong> ${apartment.size_sqm}<br>
-                            <strong>Rent:</strong> ${apartment.rent}<br>
-                            <strong>Rooms:</strong> ${apartment.rooms || 'N/A'}<br>
-                            <strong>Address:</strong> ${apartment.address}<br>
-                            <strong>Property ID:</strong> ${apartment.property_id}<br>
-                            <button onclick="deleteApartment(${apartment.id})">Delete</button>
-                            <hr>
-                        </div>
+                if (data.length === 0) {
+                    apartmentsListDiv.innerHTML = '<p>No apartments found.</p>';
+                    return;
+                }
+
+                data.forEach((apartment) => {
+                    const apartmentDiv = document.createElement('div');
+                    apartmentDiv.classList.add('result-style');
+                    apartmentDiv.setAttribute('data-apartment-id', apartment.id);
+                    apartmentDiv.setAttribute('data-size-sqm', apartment.size_sqm);
+                    apartmentDiv.setAttribute('data-rent', apartment.rent);
+                    apartmentDiv.setAttribute('data-rooms', apartment.rooms || 0);
+                    apartmentDiv.setAttribute('data-unit-id', apartment.unit_id);
+                    apartmentDiv.setAttribute('data-property-id', apartment.property_id);
+
+                    apartmentDiv.innerHTML = `
+                        <strong>ID:</strong> ${apartment.id}<br>
+                        <strong>Size (sqm):</strong> ${apartment.size_sqm}<br>
+                        <strong>Rent:</strong> ${apartment.rent}<br>
+                        <strong>Rooms:</strong> ${apartment.rooms || 'N/A'}<br>
+                        <strong>Unit ID:</strong> ${apartment.unit_id}<br>
+                        <strong>Property ID:</strong> ${apartment.property_id || 'N/A'}<br>
+                        <button class="secondary-button" onclick="openUpdateDialog(${apartment.id})">Update</button>
+                        <button class="danger-button" onclick="deleteApartment(${apartment.id})">Delete</button>
+                        <hr>
                     `;
-                    apartmentsListDiv.innerHTML += apartmentInfo;
+                    apartmentsListDiv.appendChild(apartmentDiv);
                 });
             } catch (error) {
-                document.getElementById('apartmentsList').innerText = `Error: ${error}`;
+                apartmentsListDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        });
+
+        // Open Update Dialog
+        function openUpdateDialog(apartmentId) {
+            const dialog = document.getElementById('updateApartmentDialog');
+            const apartmentDiv = document.querySelector(`[data-apartment-id="${apartmentId}"]`);
+
+            if (!apartmentDiv) {
+                alert("Error: Apartment data not found!");
+                return;
+            }
+
+            document.getElementById('updateApartmentId').value = apartmentId;
+            document.getElementById('updateSizeSqm').value = apartmentDiv.getAttribute('data-size-sqm');
+            document.getElementById('updateRent').value = apartmentDiv.getAttribute('data-rent');
+            document.getElementById('updateRooms').value = apartmentDiv.getAttribute('data-rooms');
+            document.getElementById('updateUnitId').value = apartmentDiv.getAttribute('data-unit-id');
+            document.getElementById('updatePropertyId').value = apartmentDiv.getAttribute('data-property-id');
+
+            dialog.style.display = 'block';
+        }
+
+        // Close Update Dialog
+        function closeUpdateDialog() {
+            const dialog = document.getElementById('updateApartmentDialog');
+            dialog.style.display = 'none';
+        }
+
+        // Update Apartment
+        document.getElementById('updateApartmentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const apartmentId = document.getElementById('updateApartmentId').value;
+            const payload = {
+                size_sqm: document.getElementById('updateSizeSqm').value,
+                rent: document.getElementById('updateRent').value,
+                rooms: document.getElementById('updateRooms').value,
+                unit_id: document.getElementById('updateUnitId').value,
+                // Do not include property_id in the payload
+            };
+
+            try {
+                const response = await fetch(`${APARTMENT_API}/${apartmentId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                alert(data.message || 'Apartment updated successfully!');
+                closeUpdateDialog();
+                document.getElementById('viewApartmentsButton').click(); // Refresh the list
+            } catch (error) {
+                alert(`Error updating apartment: ${error.message}`);
             }
         });
 
@@ -173,38 +233,6 @@
                 alert(`Error: ${error}`);
             }
         }
-
-        // Update Apartment
-        document.getElementById('updateApartmentForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const apartmentId = document.getElementById('updateId').value;
-            const payload = {
-                size_sqm: document.getElementById('updateSizeSqm').value,
-                rent: document.getElementById('updateRent').value,
-                rooms: document.getElementById('updateRooms').value,
-                address: document.getElementById('updateAddress').value,
-                property_id: document.getElementById('updatePropertyId').value
-            };
-
-            try {
-                const response = await fetch(`${APARTMENT_API}/${apartmentId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                document.getElementById('updateResult').innerText = JSON.stringify(data, null, 2);
-                document.getElementById('viewApartmentsButton').click(); // Refresh the list
-            } catch (error) {
-                document.getElementById('updateResult').innerText = `Error: ${error}`;
-            }
-        });
     </script>
 </body>
 
