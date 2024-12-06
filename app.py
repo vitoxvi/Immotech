@@ -58,9 +58,9 @@ def units():
 def appartments():
     return render_template('appartment.html')
 
-# @app.route('/tenants')
-# def tenants():
-#     return render_template('tenant.html')
+@app.route('/tenants')
+def tenants():
+    return render_template('tenant.html')
 
 
 
@@ -77,6 +77,7 @@ app.register_blueprint(employee_bp)
 app.register_blueprint(vehicle_usage_log_bp)
 app.register_blueprint(vehicle_bp)
 app.register_blueprint(unit_bp)
+
 
 
 if __name__ == "__main__":

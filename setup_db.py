@@ -110,11 +110,10 @@ CREATE TABLE IF NOT EXISTS Apartment (
     rent REAL NOT NULL CHECK (rent >= 0),
     rooms INTEGER CHECK (rooms >= 0),
     designation TEXT,
-    unit_number TEXT NOT NULL,
     unit_id INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (unit_id) REFERENCES Unit (id) ON DELETE SET NULL
+    FOREIGN KEY (unit_id) REFERENCES Unit (id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_unit_id ON Apartment (unit_id);
@@ -153,7 +152,6 @@ CREATE INDEX IF NOT EXISTS idx_rental_id ON Contract (rental_id);
 CREATE INDEX IF NOT EXISTS idx_start_date_end_date ON Contract (start_date, end_date);
 """
 
-
 # Function to set up the database
 def setup_database():
     # Connect to the SQLite database
@@ -171,6 +169,7 @@ def setup_database():
         DROP TABLE IF EXISTS Tenant;
         DROP TABLE IF EXISTS BoardMember;
         DROP TABLE IF EXISTS Property;
+        DROP TABLE IF EXISTS Unit;
         DROP TABLE IF EXISTS Apartment;
         DROP TABLE IF EXISTS ParkingSpot;
         DROP TABLE IF EXISTS Contract;

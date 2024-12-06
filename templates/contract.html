@@ -8,6 +8,39 @@
     <script>
         const CONTRACT_API = '/backend/contracts';
 
+        // Toggle new tenant fields and is_cooperative_member
+        function toggleTenantFields() {
+            const tenantIdField = document.getElementById('tenantId');
+            const newTenantFields = document.getElementById('newTenantFields');
+            const cooperativeField = document.getElementById('cooperativeField');
+            
+            if (tenantIdField.value) {
+                newTenantFields.style.display = 'none';
+                cooperativeField.style.display = 'none';
+            } else {
+                newTenantFields.style.display = 'block';
+                cooperativeField.style.display = 'block';
+            }
+        }
+
+        // Toggle rental-specific fields
+        function toggleRentalFields() {
+            const rentalType = document.getElementById('rentalType').value;
+            const apartmentFields = document.getElementById('apartmentFields');
+            const parkingFields = document.getElementById('parkingFields');
+
+            if (rentalType === 'Apartment') {
+                apartmentFields.style.display = 'block';
+                parkingFields.style.display = 'none';
+            } else if (rentalType === 'ParkingSpot') {
+                apartmentFields.style.display = 'none';
+                parkingFields.style.display = 'block';
+            } else {
+                apartmentFields.style.display = 'none';
+                parkingFields.style.display = 'none';
+            }
+        }
+
         // Fetch and display contracts
         async function fetchContracts() {
             const rentalType = document.getElementById('rentalTypeFilter').value;
@@ -95,6 +128,76 @@
                 alert(`Error updating contract: ${error.message}`);
             }
         }
+
+        // Handle contract creation
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('createContractForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const tenantId = document.getElementById('tenantId').value;
+                const rentalType = document.getElementById('rentalType').value;
+
+                // Determine rental ID based on rental type
+                const rentalId = rentalType === 'Apartment'
+                    ? document.getElementById('apartmentId').value
+                    : document.getElementById('parkingId').value;
+
+                // Validate mandatory fields
+                if (!rentalType) {
+                    alert('Rental type is required.');
+                    return;
+                }
+
+                if (!rentalId) {
+                    alert('Rental ID is required.');
+                    return;
+                }
+
+                const startDate = document.getElementById('startDate').value;
+                if (!startDate) {
+                    alert('Start date is required.');
+                    return;
+                }
+
+                // Construct the payload
+                const payload = {
+                    tenant_id: tenantId || null,
+                    is_cooperative_member: tenantId ? null : document.getElementById('isCooperativeMember').value,
+                    rental_type: rentalType,
+                    rental_id: rentalId,
+                    start_date: startDate,
+                    end_date: document.getElementById('endDate').value || null,
+                };
+
+                // Include new tenant details if no tenant ID is provided
+                if (!tenantId) {
+                    payload.first_name = document.getElementById('firstName').value;
+                    payload.last_name = document.getElementById('lastName').value;
+                    payload.date_of_birth = document.getElementById('dateOfBirth').value;
+                    payload.address = document.getElementById('address').value;
+                    payload.phone_number = document.getElementById('phoneNumber').value;
+                    payload.email = document.getElementById('email').value;
+                }
+
+                try {
+                    const response = await fetch(CONTRACT_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        document.getElementById('createContractResult').innerText = JSON.stringify(data, null, 2);
+                        //fetchContracts(); // Refresh contracts after successful creation
+                    } else {
+                        alert(`Error: ${data.error}`);
+                    }
+                } catch (error) {
+                    document.getElementById('createContractResult').innerText = `Error: ${error.message}`;
+                }
+            });
+        });
     </script>
 </head>
 <body>
@@ -105,20 +208,72 @@
 
         <button onclick="window.location.href='/'" class="back-button">Go Back</button>
 
-        <!-- Filter Contracts -->
-        <h2>View Contracts</h2>
-        <form class="form-style">
-            <label for="rentalTypeFilter">Filter by Rental Type:</label>
-            <select id="rentalTypeFilter" name="rentalTypeFilter">
-                <option value="">All</option>
-                <option value="Apartment">Apartment</option>
-                <option value="ParkingSpot">Parking Spot</option>
-            </select>
-            <button type="button" onclick="fetchContracts()" class="primary-button">Fetch Contracts</button>
-        </form>
+    <div id="contractList"></div>
 
-        <div id="contractList" class="result-style"></div>
-    </main>
+    <!-- Create Contract -->
+    <h2>Create New Contract</h2>
+    <form id="createContractForm">
+        <h3>Tenant Details</h3>
+        <label for="tenantId">Tenant ID (Leave blank to create a new tenant):</label>
+        <input type="number" id="tenantId" name="tenantId" min="1" placeholder="Existing Tenant ID" oninput="toggleTenantFields()"><br>
+
+        <div id="cooperativeField" style="display: block;">
+            <label for="isCooperativeMember">Is Cooperative Member:</label>
+            <select id="isCooperativeMember" name="isCooperativeMember">
+                <option value="1">Yes</option>
+                <option value="0" selected>No</option>
+            </select><br>
+        </div>
+
+        <div id="newTenantFields" style="display: block;">
+            <label for="firstName">First Name:</label>
+            <input type="text" id="firstName" name="firstName" placeholder="First Name"><br>
+
+            <label for="lastName">Last Name:</label>
+            <input type="text" id="lastName" name="lastName" placeholder="Last Name"><br>
+
+            <label for="dateOfBirth">Date of Birth:</label>
+            <input type="date" id="dateOfBirth" name="dateOfBirth"><br>
+
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address" placeholder="Address"><br>
+
+            <label for="phoneNumber">Phone Number:</label>
+            <input type="text" id="phoneNumber" name="phoneNumber" placeholder="Phone Number"><br>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" placeholder="Email"><br>
+        </div>
+
+        <h3>Rental Type</h3>
+        <label for="rentalType">Rental Type:</label>
+        <select id="rentalType" name="rentalType" onchange="toggleRentalFields()">
+            <option value="" selected disabled>Select Rental Type</option>
+            <option value="Apartment">Apartment</option>
+            <option value="ParkingSpot">Parking Spot</option>
+        </select><br>
+
+        <div id="apartmentFields" style="display: none;">
+            <label for="apartmentId">Apartment ID:</label>
+            <input type="number" id="apartmentId" name="apartmentId" min="1" placeholder="Apartment ID"><br>
+        </div>
+
+        <div id="parkingFields" style="display: none;">
+            <label for="parkingId">Parking Spot ID:</label>
+            <input type="number" id="parkingId" name="parkingId" min="1" placeholder="Parking Spot ID"><br>
+        </div>
+
+        <h3>Contract Details</h3>
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate" name="startDate" required><br>
+
+        <label for="endDate">End Date (Leave blank for indefinite):</label>
+        <input type="date" id="endDate" name="endDate"><br>
+
+        <button type="submit">Create Contract</button>
+    </form>
+    <div id="createContractResult"></div>
+
 </body>
 </html>
 
