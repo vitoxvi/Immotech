@@ -4,37 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parking Spot Management</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <h1>Parking Spot Management</h1>
+    <main>
+        <header>
+            <h1>Parking Spots</h1>
+        </header>
 
-    <!-- Create Parking Spot -->
-    <h2>Create Parking Spot</h2>
-    <form id="createParkingSpotForm">
-        <label for="rent">Rent:</label>
-        <input type="number" id="rent" name="rent" required><br>
+        <button onclick="window.location.href='/'" class="back-button">Go Back</button>
 
-        <label for="spotNumber">Spot Number:</label>
-        <input type="text" id="spotNumber" name="spotNumber" required><br>
+        <!-- Create Parking Spot -->
+        <h2>Create Parking Spot</h2>
+        <form id="createParkingSpotForm" class="form-style">
+            <label for="rent">Rent:</label>
+            <input type="number" id="rent" name="rent" required><br>
 
-        <label for="type">Type:</label>
-        <input type="text" id="type" name="type" required><br>
+            <label for="spotNumber">Spot Number:</label>
+            <input type="text" id="spotNumber" name="spotNumber" required><br>
 
-        <label for="propertyId">Property ID:</label>
-        <input type="number" id="propertyId" name="propertyId" required><br>
+            <label for="type">Type:</label>
+            <input type="text" id="type" name="type" required><br>
 
-        <button type="submit">Create Parking Spot</button>
-    </form>
-    <div id="createResult"></div>
+            <label for="propertyId">Property ID:</label>
+            <input type="number" id="propertyId" name="propertyId" required><br>
 
-    <hr>
+            <button type="submit" class="primary-button">Create Parking Spot</button>
+        </form>
+        <div id="createResult" class="result-style"></div>
 
-    <!-- View Parking Spots -->
-    <h2>View Parking Spots</h2>
-    <label for="propertyIdFilter">Filter by Property ID (Leave blank for all):</label>
-    <input type="number" id="propertyIdFilter" name="propertyIdFilter">
-    <button id="viewParkingSpotsButton">View Parking Spots</button>
-    <div id="parkingSpotsList"></div>
+        <hr>
+
+        <!-- View Parking Spots -->
+        <h2>View Parking Spots</h2>
+        <form class="form-style">
+            <label for="propertyIdFilter">Filter by Property ID (Leave blank for all):</label>
+            <input type="number" id="propertyIdFilter" name="propertyIdFilter">
+            <button type="button" id="viewParkingSpotsButton" class="primary-button">View Parking Spots</button>
+        </form>
+        <div id="parkingSpotsList" class="list-style"></div>
+    </main>
 
     <script>
         const PARKING_SPOT_API = '/backend/parking_spots';
@@ -67,28 +76,33 @@
         document.getElementById('viewParkingSpotsButton').addEventListener('click', async () => {
             const propertyId = document.getElementById('propertyIdFilter').value;
             const url = propertyId ? `${PARKING_SPOT_API}?property_id=${propertyId}` : PARKING_SPOT_API;
+            const spotsListDiv = document.getElementById('parkingSpotsList');
+            spotsListDiv.innerHTML = ''; // Clear previous content
 
             try {
                 const response = await fetch(url);
                 const data = await response.json();
-                const spotsListDiv = document.getElementById('parkingSpotsList');
-                spotsListDiv.innerHTML = ''; // Clear previous content
+
+                if (data.length === 0) {
+                    spotsListDiv.innerHTML = '<p>No parking spots found.</p>';
+                    return;
+                }
+
                 data.forEach(spot => {
-                    const spotInfo = `
-                        <div>
-                            <strong>ID:</strong> ${spot.id}<br>
-                            <strong>Rent:</strong> ${spot.rent}<br>
-                            <strong>Spot Number:</strong> ${spot.spot_number}<br>
-                            <strong>Type:</strong> ${spot.type}<br>
-                            <strong>Property ID:</strong> ${spot.property_id}<br>
-                            <button onclick="deleteParkingSpot(${spot.id})">Delete</button>
-                            <hr>
-                        </div>
+                    const spotDiv = document.createElement('div');
+                    spotDiv.classList.add('result-style'); // Use existing CSS for styling
+                    spotDiv.innerHTML = `
+                        <strong>ID:</strong> ${spot.id}<br>
+                        <strong>Rent:</strong> ${spot.rent}<br>
+                        <strong>Spot Number:</strong> ${spot.spot_number}<br>
+                        <strong>Type:</strong> ${spot.type}<br>
+                        <strong>Property ID:</strong> ${spot.property_id}<br>
+                        <button class="primary-button" onclick="deleteParkingSpot(${spot.id})">Delete</button>
                     `;
-                    spotsListDiv.innerHTML += spotInfo;
+                    spotsListDiv.appendChild(spotDiv);
                 });
             } catch (error) {
-                document.getElementById('parkingSpotsList').innerText = `Error: ${error}`;
+                spotsListDiv.innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
             }
         });
 

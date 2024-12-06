@@ -3,76 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Board Member Management</title>
+    <title>Board Management</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <h1>Board Member Management</h1>
+    <main>
+        <header>
+            <h1>Board Management</h1>
+        </header>
 
-    <!-- Create Board Member -->
-    <h2>Create Board Member</h2>
-    <form id="createBoardMemberForm">
-        <!-- Person Fields -->
-        <label for="firstName">First Name:</label>
-        <input type="text" id="firstName" name="firstName" required><br>
+        <button onclick="window.location.href='/'" class="back-button">Go Back</button>
 
-        <label for="lastName">Last Name:</label>
-        <input type="text" id="lastName" name="lastName" required><br>
+        <!-- Create Board Member -->
+        <h2>Create Board Member</h2>
+        <form id="createBoardMemberForm" class="form-style">
+            <!-- Person Fields -->
+            <label for="firstName">First Name:</label>
+            <input type="text" id="firstName" name="firstName" required><br>
 
-        <label for="dateOfBirth">Date of Birth:</label>
-        <input type="date" id="dateOfBirth" name="dateOfBirth"><br>
+            <label for="lastName">Last Name:</label>
+            <input type="text" id="lastName" name="lastName" required><br>
 
-        <label for="address">Address:</label>
-        <input type="text" id="address" name="address"><br>
+            <label for="dateOfBirth">Date of Birth:</label>
+            <input type="date" id="dateOfBirth" name="dateOfBirth"><br>
 
-        <label for="phoneNumber">Phone Number:</label>
-        <input type="text" id="phoneNumber" name="phoneNumber"><br>
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address"><br>
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email"><br>
+            <label for="phoneNumber">Phone Number:</label>
+            <input type="text" id="phoneNumber" name="phoneNumber"><br>
 
-        <label for="bankCorrespondence">Bank Correspondence:</label>
-        <input type="text" id="bankCorrespondence" name="bankCorrespondence"><br>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email"><br>
 
-        <!-- Board Member Fields -->
-        <label for="role">Role:</label>
-        <input type="text" id="role" name="role" required><br>
+            <label for="bankCorrespondence">Bank Correspondence:</label>
+            <input type="text" id="bankCorrespondence" name="bankCorrespondence"><br>
 
-        <button type="submit">Create Board Member</button>
-    </form>
-    <div id="createBoardMemberResult"></div>
+            <!-- Board Member Fields -->
+            <label for="role">Role:</label>
+            <input type="text" id="role" name="role" required><br>
 
-    <hr>
+            <button type="submit" class="primary-button">Create Board Member</button>
+        </form>
+        <div id="createBoardMemberResult" class="result-style"></div>
 
-    <!-- View Board Members -->
-    <h2>View Board Members</h2>
-    <button id="viewBoardMembersButton">View All Board Members</button>
-    <div id="boardMemberList"></div>
+        <hr>
 
-    <hr>
+        <!-- View Board Members -->
+        <h2>View Board Members</h2>
+        <button id="viewBoardMembersButton" class="primary-button">View All Board Members</button>
+        <div id="boardMemberList" class="list-style"></div>
 
-    <!-- Update Board Member -->
-    <h2>Update Board Member</h2>
-    <form id="updateBoardMemberForm">
-        <label for="updateBoardMemberId">Board Member ID:</label>
-        <input type="number" id="updateBoardMemberId" name="updateBoardMemberId" min="1" required><br>
+        <hr>
 
-        <label for="updateRole">Role:</label>
-        <input type="text" id="updateRole" name="updateRole" required><br>
+        <!-- Update Board Member -->
+        <h2>Update Board Member</h2>
+        <form id="updateBoardMemberForm" class="form-style">
+            <label for="updateBoardMemberId">Board Member ID:</label>
+            <input type="number" id="updateBoardMemberId" name="updateBoardMemberId" min="1" required><br>
 
-        <button type="submit">Update Board Member</button>
-    </form>
-    <div id="updateBoardMemberResult"></div>
+            <label for="updateRole">Role:</label>
+            <input type="text" id="updateRole" name="updateRole" required><br>
 
-    <hr>
+            <button type="submit" class="primary-button">Update Board Member</button>
+        </form>
+        <div id="updateBoardMemberResult" class="result-style"></div>
 
-    <!-- Delete Board Member -->
-    <h2>Delete Board Member</h2>
-    <form id="deleteBoardMemberForm">
-        <label for="deleteBoardMemberId">Board Member ID:</label>
-        <input type="number" id="deleteBoardMemberId" name="deleteBoardMemberId" min="1" required>
-        <button type="submit">Delete Board Member</button>
-    </form>
-    <div id="deleteBoardMemberResult"></div>
+        <hr>
+
+        <!-- Delete Board Member -->
+        <h2>Delete Board Member</h2>
+        <form id="deleteBoardMemberForm" class="form-style">
+            <label for="deleteBoardMemberId">Board Member ID:</label>
+            <input type="number" id="deleteBoardMemberId" name="deleteBoardMemberId" min="1" required>
+            <button type="submit" class="primary-button">Delete Board Member</button>
+        </form>
+        <div id="deleteBoardMemberResult" class="result-style"></div>
+    </main>
 
     <script>
         const BOARD_MEMBER_API = '/backend/board_members'; // Updated to use the backend prefix

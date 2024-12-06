@@ -1,9 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tenant Management</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+    <main>
+        <header>
+            <h1>Tenant Management</h1>
+        </header>
+
+        <button onclick="window.location.href='/'" class="back-button">Go Back</button>
+
+        <!-- Filter Tenants -->
+        <h2>View Tenants</h2>
+        <form class="form-style">
+            <label for="rentalTypeFilter">Filter by Rental Type:</label>
+            <select id="rentalTypeFilter" name="rentalTypeFilter">
+                <option value="" selected>All</option>
+                <option value="Apartment">Apartment</option>
+                <option value="ParkingSpot">Parking Spot</option>
+            </select><br>
+
+            <label for="propertyIdFilter">Filter by Property ID:</label>
+            <input type="number" id="propertyIdFilter" name="propertyIdFilter"><br>
+
+            <label for="unitIdFilter">Filter by Unit ID:</label>
+            <input type="number" id="unitIdFilter" name="unitIdFilter"><br>
+
+            <button type="button" onclick="fetchTenants()" class="primary-button">Fetch Tenants</button>
+        </form>
+        <div id="tenantList" class="list-style"></div>
+
+        <hr>
+
+        <!-- Update Tenant -->
+        <h2>Update Tenant</h2>
+        <form onsubmit="event.preventDefault(); updateTenant();" class="form-style">
+            <label for="updateTenantId">Tenant ID:</label>
+            <input type="number" id="updateTenantId" name="updateTenantId" required><br>
+
+            <label for="updateIsCooperativeMember">Is Cooperative Member:</label>
+            <select id="updateIsCooperativeMember" name="updateIsCooperativeMember">
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+            </select><br>
+
+            <button type="submit" class="primary-button">Update Tenant</button>
+        </form>
+    </main>
+
     <script>
         const TENANT_API = '/backend/tenants';
 
@@ -26,27 +76,42 @@
 
             try {
                 const response = await fetch(url);
-                const data = await response.json();
-                displayTenants(data);
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.statusText}`);
+                }
+
+                const tenants = await response.json();
+                displayTenants(tenants);
             } catch (error) {
-                alert(`Error fetching tenants: ${error}`);
+                alert(`Error fetching tenants: ${error.message}`);
             }
         }
+
 
         // Display tenants
         function displayTenants(tenants) {
             const tenantList = document.getElementById('tenantList');
-            tenantList.innerHTML = tenants.map(tenant => `
-                <div>
-                    <strong>Tenant ID:</strong> ${tenant.tenant_id}<br>
-                    <strong>Name:</strong> ${tenant.first_name} ${tenant.last_name}<br>
-                    <strong>Rental Type:</strong> ${tenant.rental_type}<br>
-                    <strong>Start Date:</strong> ${tenant.start_date}<br>
-                    <strong>End Date:</strong> ${tenant.end_date || 'Indefinite'}<br>
-                    <hr>
-                </div>
-            `).join('');
+            tenantList.innerHTML = ''; // Clear the list before appending
+
+            if (!tenants || tenants.length === 0) {
+                tenantList.innerHTML = '<p class="result-style">No tenants found.</p>';
+                return;
+            }
+
+            tenants.forEach((tenant) => {
+                const tenantDiv = document.createElement('div');
+                tenantDiv.classList.add('result-style'); // Consistent styling
+                tenantDiv.innerHTML = `
+            <strong>Tenant ID:</strong> ${tenant.tenant_id}<br>
+            <strong>Name:</strong> ${tenant.first_name} ${tenant.last_name}<br>
+            <strong>Rental Type:</strong> ${tenant.rental_type || 'N/A'}<br>
+            <strong>Start Date:</strong> ${tenant.start_date || 'N/A'}<br>
+            <strong>End Date:</strong> ${tenant.end_date || 'Indefinite'}<br>
+        `;
+                tenantList.appendChild(tenantDiv);
+            });
         }
+
 
         // Update tenant
         async function updateTenant() {
@@ -65,45 +130,7 @@
                 alert(`Error updating tenant: ${error}`);
             }
         }
-
-    
     </script>
-</head>
-<body>
-    <h1>Tenant Management</h1>
-
-    <!-- Filter Tenants -->
-    <h2>View Tenants</h2>
-    <label for="rentalTypeFilter">Filter by Rental Type:</label>
-    <select id="rentalTypeFilter" name="rentalTypeFilter">
-        <option value="" selected>All</option>
-        <option value="Apartment">Apartment</option>
-        <option value="ParkingSpot">Parking Spot</option>
-    </select><br>
-
-    <label for="propertyIdFilter">Filter by Property ID:</label>
-    <input type="number" id="propertyIdFilter" name="propertyIdFilter"><br>
-
-    <label for="unitIdFilter">Filter by Unit ID:</label>
-    <input type="number" id="unitIdFilter" name="unitIdFilter"><br>
-
-    <button onclick="fetchTenants()">Fetch Tenants</button>
-
-    <div id="tenantList"></div>
-
-    <hr>
-
-    <!-- Update Tenant -->
-    <h2>Update Tenant</h2>
-    <form onsubmit="event.preventDefault(); updateTenant();">
-        <label for="updateTenantId">Tenant ID:</label>
-        <input type="number" id="updateTenantId" name="updateTenantId" required><br>
-        <label for="updateIsCooperativeMember">Is Cooperative Member:</label>
-        <select id="updateIsCooperativeMember" name="updateIsCooperativeMember">
-            <option value="1">Yes</option>
-            <option value="0">No</option>
-        </select><br>
-        <button type="submit">Update Tenant</button>
-    </form>
 </body>
+
 </html>
