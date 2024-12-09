@@ -97,26 +97,34 @@ def get_apartment(apartment_id):
 @apartment_bp.route('/backend/apartments/<int:apartment_id>', methods=['PUT'])
 def update_apartment(apartment_id):
     data = request.json
-    size_sqm = data.get('size_sqm')
-    rent = data.get('rent')
-    rooms = rooms = int(data.get('rooms')) if data.get('rooms') is not None else 0
+    try:
+        # Parse parameters
+        size_sqm = str(data.get('size_sqm'))  # Ensure it's a string for TEXT type
+        rent = float(data.get('rent'))  # Ensure rent is a valid float
+        rooms = int(data.get('rooms')) if data.get('rooms') is not None else 0
 
-    address = data.get('address')
-    property_id = data.get('property_id')
+        # Validate required fields
+        if not all([size_sqm, rent, rooms]):
+            return jsonify({"error": "All required fields must be provided"}), 400
 
-    if not all([size_sqm, rent, address, property_id]):
-        return jsonify({"error": "All required fields must be provided"}), 400
 
-    query = """
-    UPDATE Apartment
-    SET size_sqm = ?, rent = ?, rooms = ?, address = ?,  property_id = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-    """
-    result = query_db(query, (size_sqm, rent, rooms, address, property_id, apartment_id), commit=True)
-    if "error" in result:
-        return jsonify(result), 500
+        # Update the apartment in the database
+        query = """
+        UPDATE Apartment
+        SET size_sqm = ?, rent = ?, rooms = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """
+        result = query_db(query, (size_sqm, rent, rooms, apartment_id), commit=True)
+        if "error" in result:
+            print("Database error:", result)
+            return jsonify(result), 500
 
-    return jsonify({"message": "Apartment updated successfully"}), 200
+        return jsonify({"message": "Apartment updated successfully"}), 200
+
+    except Exception as e:
+        print("Error updating apartment:", e)
+        return jsonify({"error": str(e)}), 500
+
 
 
 # DELETE an apartment

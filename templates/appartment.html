@@ -9,66 +9,54 @@
 </head>
 
 <body>
-    <main>
-        <header>
-            <h1>Apartment Management</h1>
-        </header>
 
-        <button onclick="window.location.href='/'" class="back-button">Go Back</button>
+    <h1>Apartment Management</h1>
 
-        <!-- Create Apartment -->
-        <h2>Create Apartment</h2>
-        <form id="createApartmentForm" class="form-style">
-            <label for="sizeSqm">Size (sqm):</label>
-            <input type="number" id="sizeSqm" name="sizeSqm" required><br>
+    <!-- Create Apartment -->
+    <form id="createApartmentForm">
+        <label for="sizeSqm">Size (sqm):</label>
+        <input type="text" id="sizeSqm" name="sizeSqm" required><br> <!-- Ensure this is a string -->
 
-            <label for="rent">Rent:</label>
-            <input type="number" id="rent" name="rent" required><br>
+        <label for="rent">Rent:</label>
+        <input type="number" id="rent" name="rent" required><br>
 
-            <label for="rooms">Rooms:</label>
-            <input type="number" id="rooms" name="rooms"><br>
+        <label for="rooms">Rooms:</label>
+        <input type="number" id="rooms" name="rooms"><br>
 
-            <label for="unitId">Unit ID:</label>
-            <input type="number" id="unitId" name="unitId" required><br>
+        <label for="unitId">Unit ID:</label>
+        <input type="number" id="unitId" name="unitId" required><br> <!-- Updated to use unit ID -->
 
-            <label for="propertyId">Property ID:</label>
-            <input type="number" id="propertyId" name="propertyId" required><br>
+        <button type="submit">Create Apartment</button>
+    </form>
+    <div id="createResult"></div>
 
-            <button type="submit" class="primary-button">Create Apartment</button>
-        </form>
-        <div id="createResult" class="result-style"></div>
+    <hr>
 
-        <hr>
+    <!-- View Apartments -->
+    <h2>View Apartments</h2>
+    <button id="viewApartmentsButton">View Apartments</button>
+    <div id="apartmentsList"></div>
 
-        <!-- View Apartments -->
-        <h2>View Apartments</h2>
-        <label for="propertyIdFilter">Filter by Property ID (Leave blank for all):</label>
-        <input type="number" id="propertyIdFilter" name="propertyIdFilter">
-        <button id="viewApartmentsButton" class="primary-button">View Apartments</button>
-        <div id="apartmentsList" class="list-style"></div>
+    <hr>
 
-        <!-- Update Apartment Dialog -->
-        <div id="updateApartmentDialog" class="dialog" style="display: none;">
-            <div class="dialog-content">
-                <h2>Update Apartment</h2>
-                <form id="updateApartmentForm">
-                    <input type="hidden" id="updateApartmentId">
-                    <label for="updateSizeSqm">Size (sqm):</label>
-                    <input type="number" id="updateSizeSqm" required><br>
-                    <label for="updateRent">Rent:</label>
-                    <input type="number" id="updateRent" required><br>
-                    <label for="updateRooms">Rooms:</label>
-                    <input type="number" id="updateRooms"><br>
-                    <label for="updateUnitId">Unit ID:</label>
-                    <input type="number" id="updateUnitId" required><br>
-                    <label for="updatePropertyId">Property ID:</label>
-                    <input type="number" id="updatePropertyId" disabled><br> <!-- Make non-editable -->
-                    <button type="submit" class="primary-button">Update</button>
-                    <button type="button" onclick="closeUpdateDialog()" class="secondary-button">Cancel</button>
-                </form>
-            </div>
-        </div>
-    </main>
+    <!-- Update Apartment -->
+    <h2>Update Apartment</h2>
+    <form id="updateApartmentForm">
+        <label for="updateId">Apartment ID:</label>
+        <input type="number" id="updateId" name="updateId" required><br>
+
+        <label for="updateSizeSqm">Size (sqm):</label>
+        <input type="text" id="updateSizeSqm" name="updateSizeSqm" required><br>
+
+        <label for="updateRent">Rent:</label>
+        <input type="number" id="updateRent" name="updateRent" required><br>
+
+        <label for="updateRooms">Rooms:</label>
+        <input type="number" id="updateRooms" name="updateRooms"><br>
+
+        <button type="submit">Update Apartment</button>
+    </form>
+    <div id="updateResult"></div>
 
     <script>
         const APARTMENT_API = '/backend/apartments';
@@ -105,13 +93,8 @@
 
         // View Apartments
         document.getElementById('viewApartmentsButton').addEventListener('click', async () => {
-            const propertyId = document.getElementById('propertyIdFilter').value;
-            const url = propertyId ? `${APARTMENT_API}?property_id=${propertyId}` : APARTMENT_API;
-            const apartmentsListDiv = document.getElementById('apartmentsList');
-            apartmentsListDiv.innerHTML = ''; // Clear previous content
-
             try {
-                const response = await fetch(url);
+                const response = await fetch(APARTMENT_API);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -119,31 +102,20 @@
 
                 const data = await response.json();
 
-                if (data.length === 0) {
-                    apartmentsListDiv.innerHTML = '<p>No apartments found.</p>';
-                    return;
-                }
+                const apartmentsListDiv = document.getElementById('apartmentsList');
+                apartmentsListDiv.innerHTML = ''; // Clear previous content
 
-                data.forEach((apartment) => {
-                    const apartmentDiv = document.createElement('div');
-                    apartmentDiv.classList.add('result-style');
-                    apartmentDiv.setAttribute('data-apartment-id', apartment.id);
-                    apartmentDiv.setAttribute('data-size-sqm', apartment.size_sqm);
-                    apartmentDiv.setAttribute('data-rent', apartment.rent);
-                    apartmentDiv.setAttribute('data-rooms', apartment.rooms || 0);
-                    apartmentDiv.setAttribute('data-unit-id', apartment.unit_id);
-                    apartmentDiv.setAttribute('data-property-id', apartment.property_id);
-
-                    apartmentDiv.innerHTML = `
-                        <strong>ID:</strong> ${apartment.id}<br>
-                        <strong>Size (sqm):</strong> ${apartment.size_sqm}<br>
-                        <strong>Rent:</strong> ${apartment.rent}<br>
-                        <strong>Rooms:</strong> ${apartment.rooms || 'N/A'}<br>
-                        <strong>Unit ID:</strong> ${apartment.unit_id}<br>
-                        <strong>Property ID:</strong> ${apartment.property_id || 'N/A'}<br>
-                        <button class="secondary-button" onclick="openUpdateDialog(${apartment.id})">Update</button>
-                        <button class="danger-button" onclick="deleteApartment(${apartment.id})">Delete</button>
-                        <hr>
+                data.forEach(apartment => {
+                    const apartmentInfo = `
+                        <div>
+                            <strong>ID:</strong> ${apartment.id}<br>
+                            <strong>Size (sqm):</strong> ${apartment.size_sqm}<br>
+                            <strong>Rent:</strong> ${apartment.rent}<br>
+                            <strong>Rooms:</strong> ${apartment.rooms || 'N/A'}<br>
+                            <strong>Unit ID:</strong> ${apartment.unit_id}<br>
+                            <button onclick="deleteApartment(${apartment.id})">Delete</button>
+                            <hr>
+                        </div>
                     `;
                     apartmentsListDiv.appendChild(apartmentDiv);
                 });
@@ -186,9 +158,8 @@
             const payload = {
                 size_sqm: document.getElementById('updateSizeSqm').value,
                 rent: document.getElementById('updateRent').value,
-                rooms: document.getElementById('updateRooms').value,
-                unit_id: document.getElementById('updateUnitId').value,
-                // Do not include property_id in the payload
+
+                rooms: document.getElementById('updateRooms').value || 0,
             };
 
             try {
