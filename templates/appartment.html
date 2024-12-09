@@ -5,9 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apartment Management</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 
 <body>
+
     <h1>Apartment Management</h1>
 
     <!-- Create Apartment -->
@@ -66,17 +68,16 @@
             const payload = {
                 size_sqm: document.getElementById('sizeSqm').value,
                 rent: document.getElementById('rent').value,
-                rooms: document.getElementById('rooms').value || 0, // Default to 0 if not provided
+                rooms: document.getElementById('rooms').value || 0,
                 unit_id: document.getElementById('unitId').value,
+                property_id: document.getElementById('propertyId').value,
             };
-
-            console.log("Payload:", payload);
 
             try {
                 const response = await fetch(APARTMENT_API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
                 });
 
                 if (!response.ok) {
@@ -100,6 +101,7 @@
                 }
 
                 const data = await response.json();
+
                 const apartmentsListDiv = document.getElementById('apartmentsList');
                 apartmentsListDiv.innerHTML = ''; // Clear previous content
 
@@ -115,10 +117,68 @@
                             <hr>
                         </div>
                     `;
-                    apartmentsListDiv.innerHTML += apartmentInfo;
+                    apartmentsListDiv.appendChild(apartmentDiv);
                 });
             } catch (error) {
-                document.getElementById('apartmentsList').innerText = `Error: ${error}`;
+                apartmentsListDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        });
+
+        // Open Update Dialog
+        function openUpdateDialog(apartmentId) {
+            const dialog = document.getElementById('updateApartmentDialog');
+            const apartmentDiv = document.querySelector(`[data-apartment-id="${apartmentId}"]`);
+
+            if (!apartmentDiv) {
+                alert("Error: Apartment data not found!");
+                return;
+            }
+
+            document.getElementById('updateApartmentId').value = apartmentId;
+            document.getElementById('updateSizeSqm').value = apartmentDiv.getAttribute('data-size-sqm');
+            document.getElementById('updateRent').value = apartmentDiv.getAttribute('data-rent');
+            document.getElementById('updateRooms').value = apartmentDiv.getAttribute('data-rooms');
+            document.getElementById('updateUnitId').value = apartmentDiv.getAttribute('data-unit-id');
+            document.getElementById('updatePropertyId').value = apartmentDiv.getAttribute('data-property-id');
+
+            dialog.style.display = 'block';
+        }
+
+        // Close Update Dialog
+        function closeUpdateDialog() {
+            const dialog = document.getElementById('updateApartmentDialog');
+            dialog.style.display = 'none';
+        }
+
+        // Update Apartment
+        document.getElementById('updateApartmentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const apartmentId = document.getElementById('updateApartmentId').value;
+            const payload = {
+                size_sqm: document.getElementById('updateSizeSqm').value,
+                rent: document.getElementById('updateRent').value,
+
+                rooms: document.getElementById('updateRooms').value || 0,
+            };
+
+            try {
+                const response = await fetch(`${APARTMENT_API}/${apartmentId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                alert(data.message || 'Apartment updated successfully!');
+                closeUpdateDialog();
+                document.getElementById('viewApartmentsButton').click(); // Refresh the list
+            } catch (error) {
+                alert(`Error updating apartment: ${error.message}`);
             }
         });
 
@@ -144,36 +204,6 @@
                 alert(`Error: ${error}`);
             }
         }
-
-        // Update Apartment
-        document.getElementById('updateApartmentForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const apartmentId = document.getElementById('updateId').value;
-            const payload = {
-                size_sqm: document.getElementById('updateSizeSqm').value,
-                rent: document.getElementById('updateRent').value,
-                rooms: document.getElementById('updateRooms').value || 0,
-            };
-
-            try {
-                const response = await fetch(`${APARTMENT_API}/${apartmentId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                document.getElementById('updateResult').innerText = JSON.stringify(data, null, 2);
-                document.getElementById('viewApartmentsButton').click(); // Refresh the list
-            } catch (error) {
-                document.getElementById('updateResult').innerText = `Error: ${error}`;
-            }
-        });
     </script>
 </body>
 

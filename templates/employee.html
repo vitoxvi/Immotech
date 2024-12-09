@@ -1,89 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee CRUD Operations</title>
+    <title>Employee Management</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
+
 <body>
-    <h1>Employee Management</h1>
+    <main>
+        <header>
+            <h1>Employee Management</h1>
+        </header>
 
-    <!-- Create Employee -->
-    <h2>Create Employee</h2>
-    <form id="createEmployeeForm">
-        <!-- Person Fields -->
-        <label for="firstName">First Name:</label>
-        <input type="text" id="firstName" name="firstName" required><br>
+        <button onclick="window.location.href='/'" class="back-button">Go Back</button>
 
-        <label for="lastName">Last Name:</label>
-        <input type="text" id="lastName" name="lastName" required><br>
+        <!-- Search or View Employees -->
+        <h2>Search or View Employees</h2>
+        <input type="text" id="searchInput" placeholder="Enter name to search" class="form-style">
+        <button onclick="searchOrViewEmployees()" class="primary-button">Search</button>
+        <button onclick="searchOrViewEmployees(true)" class="secondary-button">View All</button>
+        <div id="employeeList" class="list-style"></div>
 
-        <label for="dateOfBirth">Date of Birth:</label>
-        <input type="date" id="dateOfBirth" name="dateOfBirth"><br>
+        <hr>
+        <!--Update Employees -->
+        <div id="updateEmployeeDialog" class="dialog" style="display: none;">
+            <div class="dialog-content">
+                <h2>Update Employee</h2>
+                <form id="updateEmployeeDialogForm">
+                    <input type="hidden" id="updateEmployeeDialogId">
+                    <label for="updateEmployeeDialogRole">Role:</label>
+                    <input type="text" id="updateEmployeeDialogRole" required><br>
+                    <label for="updateEmployeeDialogRate">Employment Rate (%):</label>
+                    <input type="number" id="updateEmployeeDialogRate" min="1" max="100" required><br>
+                    <button type="submit" class="primary-button">Update</button>
+                    <button type="button" onclick="closeUpdateEmployeeDialog()" class="secondary-button">Cancel</button>
+                </form>
+            </div>
+        </div>
 
-        <label for="address">Address:</label>
-        <input type="text" id="address" name="address"><br>
+        <!-- Create Employee -->
+        <h2>Create Employee</h2>
+        <form id="createEmployeeForm" class="form-style">
+            <!-- Person Fields -->
+            <label for="firstName">First Name:</label>
+            <input type="text" id="firstName" name="firstName" required><br>
 
-        <label for="phoneNumber">Phone Number:</label>
-        <input type="text" id="phoneNumber" name="phoneNumber"><br>
+            <label for="lastName">Last Name:</label>
+            <input type="text" id="lastName" name="lastName" required><br>
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email"><br>
+            <label for="dateOfBirth">Date of Birth:</label>
+            <input type="date" id="dateOfBirth" name="dateOfBirth"><br>
 
-        <label for="bankCorrespondence">Bank Correspondence:</label>
-        <input type="text" id="bankCorrespondence" name="bankCorrespondence"><br>
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address"><br>
 
-        <!-- Employee Fields -->
-        <label for="role">Role:</label>
-        <input type="text" id="role" name="role" required><br>
+            <label for="phoneNumber">Phone Number:</label>
+            <input type="text" id="phoneNumber" name="phoneNumber"><br>
 
-        <label for="employmentRate">Employment Rate (%):</label>
-        <input type="number" id="employmentRate" name="employmentRate" min="1" max="100" required><br>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email"><br>
 
-        <button type="submit">Create Employee</button>
-    </form>
-    <div id="createEmployeeResult"></div>
+            <label for="bankCorrespondence">Bank Correspondence:</label>
+            <input type="text" id="bankCorrespondence" name="bankCorrespondence"><br>
 
-    <hr>
+            <!-- Employee Fields -->
+            <label for="role">Role:</label>
+            <input type="text" id="role" name="role" required><br>
 
-    <!-- Read Employees -->
-    <h2>View Employees</h2>
-    <button id="viewEmployeesButton">View All Employees</button>
-    <div id="employeeList"></div>
+            <label for="employmentRate">Employment Rate (%):</label>
+            <input type="number" id="employmentRate" name="employmentRate" min="1" max="100" required><br>
 
-    <hr>
-
-    <!-- Update Employee -->
-    <h2>Update Employee</h2>
-    <form id="updateEmployeeForm">
-        <label for="updateEmployeeId">Employee ID:</label>
-        <input type="number" id="updateEmployeeId" name="updateEmployeeId" min="1" required><br>
-
-        <label for="updateRole">Role:</label>
-        <input type="text" id="updateRole" name="updateRole" ><br>
-
-        <label for="updateEmploymentRate">Employment Rate (%):</label>
-        <input type="number" id="updateEmploymentRate" name="updateEmploymentRate" min="1" max="100"><br>
-
-        <button type="submit">Update Employee</button>
-    </form>
-    <div id="updateEmployeeResult"></div>
-
-    <hr>
-
-    <!-- Delete Employee -->
-    <h2>Delete Employee</h2>
-    <form id="deleteEmployeeForm">
-        <label for="deleteEmployeeId">Employee ID:</label>
-        <input type="number" id="deleteEmployeeId" name="deleteEmployeeId" min="1" required>
-        <button type="submit">Delete Employee</button>
-    </form>
-    <div id="deleteEmployeeResult"></div>
+            <button type="submit" class="primary-button">Create Employee</button>
+        </form>
+        <div id="createEmployeeResult" class="result-style"></div>
+    </main>
 
     <script>
         const EMPLOYEE_API = 'backend/employees';
 
-        // Create Employee
+        async function deleteEmployee(employeeId) {
+            if (!confirm(`Are you sure you want to delete Employee ID ${employeeId}?`)) return;
+
+            try {
+                const response = await fetch(`${EMPLOYEE_API}/${employeeId}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    alert(`Error deleting employee: ${errorText}`);
+                    return;
+                }
+
+                alert(`Employee ID ${employeeId} deleted successfully.`);
+                searchOrViewEmployees(true); // Refresh employee list
+            } catch (error) {
+                alert(`Error deleting employee: ${error.message}`);
+            }
+        }
+
+        document.getElementById('updateEmployeeDialogForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const employeeId = document.getElementById('updateEmployeeDialogId').value;
+            const payload = {
+                role: document.getElementById('updateEmployeeDialogRole').value,
+                employment_rate: parseFloat(document.getElementById('updateEmployeeDialogRate').value),
+            };
+
+            try {
+                const response = await fetch(`${EMPLOYEE_API}/${employeeId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    alert(`Error updating employee: ${errorText}`);
+                    return;
+                }
+
+                alert(`Employee ID ${employeeId} updated successfully.`);
+                closeUpdateEmployeeDialog();
+                searchOrViewEmployees(true); // Refresh employee list
+            } catch (error) {
+                alert(`Error updating employee: ${error.message}`);
+            }
+        });
+
+
+
+
+        function openUpdateEmployeeDialog(employeeId) {
+            const dialog = document.getElementById('updateEmployeeDialog');
+            const employeeDiv = document.querySelector(`[data-employee-id="${employeeId}"]`);
+
+            if (!employeeDiv) {
+                alert("Error: Employee data not found!");
+                return;
+            }
+
+            document.getElementById('updateEmployeeDialogId').value = employeeId;
+            document.getElementById('updateEmployeeDialogRole').value = employeeDiv.querySelector('.employee-role').innerText;
+            document.getElementById('updateEmployeeDialogRate').value = employeeDiv.querySelector('.employee-rate').innerText;
+
+            dialog.style.display = 'block';
+        }
+
+        function closeUpdateEmployeeDialog() {
+            const dialog = document.getElementById('updateEmployeeDialog');
+            dialog.style.display = 'none';
+        }
+
+    
+
         document.getElementById('createEmployeeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -108,60 +181,60 @@
                 const data = await response.json();
                 document.getElementById('createEmployeeResult').innerText = JSON.stringify(data, null, 2);
             } catch (error) {
-                document.getElementById('createEmployeeResult').innerText = `Error: ${error}`;
+                document.getElementById('createEmployeeResult').innerText = `Error: ${error.message}`;
             }
         });
 
-        // View Employees
-        document.getElementById('viewEmployeesButton').addEventListener('click', async () => {
+        async function searchOrViewEmployees(viewAll = false) {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            const employeeList = document.getElementById('employeeList');
+            employeeList.innerHTML = ''; // Clear previous content
+
             try {
                 const response = await fetch(EMPLOYEE_API);
                 const data = await response.json();
-                document.getElementById('employeeList').innerText = JSON.stringify(data, null, 2);
-            } catch (error) {
-                document.getElementById('employeeList').innerText = `Error: ${error}`;
-            }
-        });
 
-        // Update Employee
-        document.getElementById('updateEmployeeForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+                // If not viewing all, filter employees by name (partial match, case insensitive)
+                const filteredEmployees = viewAll
+                    ? data
+                    : data.filter(employee =>
+                        employee.first_name.toLowerCase().includes(query) ||
+                        employee.last_name.toLowerCase().includes(query)
+                    );
 
-            const employeeId = document.getElementById('updateEmployeeId').value;
-            const payload = {
-                role: document.getElementById('updateRole').value,
-                employment_rate: document.getElementById('updateEmploymentRate').value,
-            };
+                if (filteredEmployees.length === 0) {
+                    employeeList.innerHTML = '<p>No employees found.</p>';
+                    return;
+                }
 
-            try {
-                const response = await fetch(`${EMPLOYEE_API}/${employeeId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
+                // Display employees
+                filteredEmployees.forEach(employee => {
+                    const employeeDiv = document.createElement('div');
+                    employeeDiv.classList.add('result-style');
+                    employeeDiv.setAttribute('data-employee-id', employee.person_id);
+
+                    employeeDiv.innerHTML = `
+                <strong>ID:</strong> ${employee.person_id}<br>
+                <strong>First Name:</strong> ${employee.first_name}<br>
+                <strong>Last Name:</strong> ${employee.last_name}<br>
+                <strong>Email:</strong> ${employee.email || 'N/A'}<br>
+                <strong>Phone Number:</strong> ${employee.phone_number || 'N/A'}<br>
+                <strong>Address:</strong> ${employee.address || 'N/A'}<br>
+                <strong>Role:</strong> <span class="employee-role">${employee.role}</span><br>
+                <strong>Employment Rate:</strong> <span class="employee-rate">${employee.employment_rate}</span>%<br>
+                <button class="secondary-button" onclick="openUpdateEmployeeDialog(${employee.person_id})">Update</button>
+                <button class="danger-button" onclick="deleteEmployee(${employee.person_id})">Delete</button>
+                <hr>
+            `;
+
+                    employeeList.appendChild(employeeDiv);
                 });
-                const data = await response.json();
-                document.getElementById('updateEmployeeResult').innerText = JSON.stringify(data, null, 2);
             } catch (error) {
-                document.getElementById('updateEmployeeResult').innerText = `Error: ${error}`;
+                employeeList.innerHTML = `<p>Error fetching employees: ${error.message}</p>`;
             }
-        });
+        }
 
-        // Delete Employee
-        document.getElementById('deleteEmployeeForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const employeeId = document.getElementById('deleteEmployeeId').value;
-
-            try {
-                const response = await fetch(`${EMPLOYEE_API}/${employeeId}`, {
-                    method: 'DELETE',
-                });
-                const data = await response.json();
-                document.getElementById('deleteEmployeeResult').innerText = JSON.stringify(data, null, 2);
-            } catch (error) {
-                document.getElementById('deleteEmployeeResult').innerText = `Error: ${error}`;
-            }
-        });
     </script>
 </body>
+
 </html>

@@ -1,56 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vehicle Management</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
+
 <body>
-    <h1>Vehicle Management</h1>
+    <main>
+        <header>
+            <h1>Vehicle Management</h1>
+        </header>
 
-    <!-- Search Form -->
-    <h2>Search Vehicles</h2>
-    <form id="searchForm">
-        <label for="searchId">Vehicle ID (0 for all):</label>
-        <input type="number" id="searchId" name="searchId" min="0" required>
-        <button type="submit">Search</button>
-    </form>
-    <div id="searchResult"></div>
+        <button onclick="window.location.href='/'" class="back-button">Go Back</button>
 
-    <hr>
+        <!-- Search Vehicles -->
+        <h2>Search Vehicles</h2>
+        <form id="searchForm" class="form-style">
+            <label for="searchId">Vehicle ID (0 for all):</label>
+            <input type="number" id="searchId" name="searchId" min="0" required>
+            <button type="submit" class="primary-button">Search</button>
+        </form>
+        <div id="searchResult" class="result-style"></div>
 
-    <!-- Modify Vehicle -->
-    <h2>Modify Vehicle</h2>
-    <form id="modifyForm">
-        <label for="vehicleId">ID:</label>
-        <input type="number" id="vehicleId" name="vehicleId" min="0" required><br>
+        <hr>
 
-        <label for="vehicleName">Name:</label>
-        <input type="text" id="vehicleName" name="vehicleName" required><br>
+        <!-- Modify Vehicle -->
+        <h2>Modify Vehicle</h2>
+        <form id="modifyForm" class="form-style">
+            <label for="vehicleId">ID:</label>
+            <input type="number" id="vehicleId" name="vehicleId" min="0" required><br>
 
-        <label for="vehicleLicense">License Plate:</label>
-        <input type="text" id="vehicleLicense" name="vehicleLicense" required><br>
+            <label for="vehicleName">Name:</label>
+            <input type="text" id="vehicleName" name="vehicleName" required><br>
 
-        <label for="vehicleDocument">Document (Optional):</label>
-        <input type="text" id="vehicleDocument" name="vehicleDocument"><br>
+            <label for="vehicleLicense">License Plate:</label>
+            <input type="text" id="vehicleLicense" name="vehicleLicense" required><br>
 
-        <button type="submit">Modify</button>
-    </form>
-    <div id="modifyResult"></div>
+            <label for="vehicleDocument">Document (Optional):</label>
+            <input type="text" id="vehicleDocument" name="vehicleDocument"><br>
 
-    <hr>
+            <button type="submit" class="primary-button">Modify</button>
+        </form>
+        <div id="modifyResult" class="result-style"></div>
 
-    <!-- Delete Vehicle -->
-    <h2>Delete Vehicle</h2>
-    <form id="deleteForm">
-        <label for="deleteId">Vehicle ID:</label>
-        <input type="number" id="deleteId" name="deleteId" min="1" required>
-        <button type="submit">Delete</button>
-    </form>
-    <div id="deleteResult"></div>
+        <hr>
+        <!-- Create Vehicle -->
+        <h2>Create Vehicle</h2>
+        <form id="createVehicleForm" class="form-style">
+            <label for="createVehicleName">Name:</label>
+            <input type="text" id="createVehicleName" name="createVehicleName" required><br>
+
+            <label for="createVehicleLicense">License Plate:</label>
+            <input type="text" id="createVehicleLicense" name="createVehicleLicense" required><br>
+
+            <label for="createVehicleDocument">Document (Optional):</label>
+            <input type="text" id="createVehicleDocument" name="createVehicleDocument"><br>
+
+            <button type="submit" class="primary-button">Create</button>
+        </form>
+        <div id="createVehicleResult" class="result-style"></div>
+        <hr>
+
+        <!-- Delete Vehicle -->
+        <h2>Delete Vehicle</h2>
+        <form id="deleteForm" class="form-style">
+            <label for="deleteId">Vehicle ID:</label>
+            <input type="number" id="deleteId" name="deleteId" min="1" required>
+            <button type="submit" class="primary-button">Delete</button>
+        </form>
+        <div id="deleteResult" class="result-style"></div>
+    </main>
 
     <script>
-        const API_BASE = 'backend/vehicles';
+        const API_BASE = '/backend/vehicles';
 
         // Search functionality
         document.getElementById('searchForm').addEventListener('submit', async (e) => {
@@ -60,9 +85,26 @@
             try {
                 const response = await fetch(url);
                 const data = await response.json();
-                document.getElementById('searchResult').innerText = JSON.stringify(data, null, 2);
+                const resultDiv = document.getElementById('searchResult');
+                resultDiv.innerHTML = ''; // Clear previous results
+                if (!data || data.length === 0) {
+                    resultDiv.innerHTML = '<p class="result-style">No vehicles found.</p>';
+                } else {
+                    data.forEach(vehicle => {
+                        const vehicleDiv = document.createElement('div');
+                        vehicleDiv.classList.add('result-style');
+                        vehicleDiv.innerHTML = `
+                            <strong>ID:</strong> ${vehicle.id}<br>
+                            <strong>Name:</strong> ${vehicle.name}<br>
+                            <strong>License Plate:</strong> ${vehicle.license_plate}<br>
+                            <strong>Document:</strong> ${vehicle.vehicle_document || 'N/A'}<br>
+                            <hr>
+                        `;
+                        resultDiv.appendChild(vehicleDiv);
+                    });
+                }
             } catch (error) {
-                document.getElementById('searchResult').innerText = `Error: ${error}`;
+                document.getElementById('searchResult').innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
             }
         });
 
@@ -82,11 +124,33 @@
                     body: JSON.stringify(payload),
                 });
                 const data = await response.json();
-                document.getElementById('modifyResult').innerText = JSON.stringify(data, null, 2);
+                document.getElementById('modifyResult').innerHTML = `<p class="result-style">Vehicle Modified:</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (error) {
-                document.getElementById('modifyResult').innerText = `Error: ${error}`;
+                document.getElementById('modifyResult').innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
             }
         });
+
+        // Create functionality
+        document.getElementById('createVehicleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('createVehicleName').value,
+                license_plate: document.getElementById('createVehicleLicense').value,
+                vehicle_document: document.getElementById('createVehicleDocument').value || null,
+            };
+            try {
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json();
+                document.getElementById('createVehicleResult').innerHTML = `<p class="result-style">Vehicle Created:</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('createVehicleResult').innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
+            }
+        });
+
 
         // Delete functionality
         document.getElementById('deleteForm').addEventListener('submit', async (e) => {
@@ -95,11 +159,12 @@
             try {
                 const response = await fetch(`${API_BASE}/${deleteId}`, { method: 'DELETE' });
                 const data = await response.json();
-                document.getElementById('deleteResult').innerText = JSON.stringify(data, null, 2);
+                document.getElementById('deleteResult').innerHTML = `<p class="result-style">Vehicle Deleted:</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (error) {
-                document.getElementById('deleteResult').innerText = `Error: ${error}`;
+                document.getElementById('deleteResult').innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
             }
         });
     </script>
 </body>
+
 </html>

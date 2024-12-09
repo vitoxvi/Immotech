@@ -1,67 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vehicle Usage Logs Management</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
+
 <body>
-    <h1>Vehicle Usage Logs Management</h1>
+    <main>
+        <header>
+            <h1>Vehicle Usage Logs Management</h1>
+        </header>
 
-    <!-- Create Vehicle Usage Log -->
-    <h2>Create Vehicle Usage Log</h2>
-    <form id="createVehicleUsageLogForm">
-        <label for="vehicleId">Vehicle ID:</label>
-        <input type="number" id="vehicleId" name="vehicleId" required><br>
+        <button onclick="window.location.href='/'" class="back-button">Go Back</button>
 
-        <label for="employeeId">Employee ID:</label>
-        <input type="number" id="employeeId" name="employeeId" required><br>
+        <!-- Create Vehicle Usage Log -->
+        <h2>Create Vehicle Usage Log</h2>
+        <form id="createVehicleUsageLogForm" class="form-style">
+            <label for="vehicleId">Vehicle ID:</label>
+            <input type="number" id="vehicleId" name="vehicleId" required><br>
 
-        <label for="dateOfUsage">Date of Usage:</label>
-        <input type="date" id="dateOfUsage" name="dateOfUsage" required><br>
+            <label for="employeeId">Employee ID:</label>
+            <input type="number" id="employeeId" name="employeeId" required><br>
 
-        <label for="purpose">Purpose:</label>
-        <input type="text" id="purpose" name="purpose" placeholder="e.g., Business Trip"><br>
+            <label for="dateOfUsage">Date of Usage:</label>
+            <input type="date" id="dateOfUsage" name="dateOfUsage" required><br>
 
-        <label for="distanceTravelled">Distance Travelled (km):</label>
-        <input type="number" id="distanceTravelled" name="distanceTravelled" min="0" placeholder="e.g., 150"><br>
+            <label for="purpose">Purpose:</label>
+            <select id="purpose" name="purpose" required>
+                <option value="Delivery">Delivery</option>
+                <option value="Repair">Repair</option>
+                <option value="Inspection">Inspection</option>
+                <option value="Private">Private</option>
+                <option value="Other">Other</option>
+            </select><br>
 
-        <button type="submit">Create Log</button>
-    </form>
-    <div id="createLogResult"></div>
 
-    <hr>
+            <label for="distanceTravelled">Distance Travelled (km):</label>
+            <input type="number" id="distanceTravelled" name="distanceTravelled" min="0" placeholder="e.g., 150"><br>
 
-    <!-- View All Vehicle Usage Logs -->
-    <h2>View All Vehicle Usage Logs</h2>
-    <form id="viewLogsForm">
-        <label>
-            <input type="radio" name="filter" value="0" checked>
-            Without Soft-Deleted Entries
-        </label>
-        <label>
-            <input type="radio" name="filter" value="1">
-            Only Soft-Deleted Entries
-        </label>
-        <label>
-            <input type="radio" name="filter" value="2">
-            Both
-        </label>
-        <br>
-        <button type="submit">View Logs</button>
-    </form>
-    <div id="logsList"></div>
+            <button type="submit" class="primary-button">Create Log</button>
+        </form>
+        <div id="createLogResult" class="result-style"></div>
 
-    <hr>
+        <hr>
 
-    <!-- Delete Vehicle Usage Log -->
-    <h2>Delete Vehicle Usage Log</h2>
-    <form id="deleteVehicleUsageLogForm">
-        <label for="deleteLogId">Log ID:</label>
-        <input type="number" id="deleteLogId" name="deleteLogId" required>
-        <button type="submit">Delete Log</button>
-    </form>
-    <div id="deleteLogResult"></div>
+        <!-- View All Vehicle Usage Logs -->
+        <h2>View All Vehicle Usage Logs</h2>
+        <form id="viewLogsForm" class="form-style">
+            <label for="logFilter">Filter by Log Type:</label>
+            <select id="logFilter" name="logFilter">
+                <option value="0">Without Soft-Deleted Entries</option>
+                <option value="1">Only Soft-Deleted Entries</option>
+                <option value="2">Both</option>
+            </select>
+            <br>
+            <button type="submit" class="primary-button">View Logs</button>
+        </form>
+
+        <div id="logsList" class="list-style"></div>
+
+        <hr>
+
+        <!-- Delete Vehicle Usage Log -->
+        <h2>Delete Vehicle Usage Log</h2>
+        <form id="deleteVehicleUsageLogForm" class="form-style">
+            <label for="deleteLogId">Log ID:</label>
+            <input type="number" id="deleteLogId" name="deleteLogId" required>
+            <button type="submit" class="primary-button">Delete Log</button>
+        </form>
+        <div id="deleteLogResult" class="result-style"></div>
+    </main>
 
     <script>
         const VEHICLE_USAGE_LOG_API = '/backend/vehicle_usage_log';
@@ -85,55 +96,57 @@
                     body: JSON.stringify(payload),
                 });
                 const data = await response.json();
-                document.getElementById('createLogResult').innerText = JSON.stringify(data, null, 2);
+                document.getElementById('createLogResult').innerHTML = `<p>Log Created:</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (error) {
-                document.getElementById('createLogResult').innerText = `Error: ${error.message}`;
+                document.getElementById('createLogResult').innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
+            }
+        });
+
+        // View All Vehicle Usage Logs
+        document.getElementById('viewLogsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Ensure the filter value is passed correctly
+            const isDeleted = parseInt(document.getElementById('logFilter').value, 10);
+
+            try {
+                const response = await fetch(`${VEHICLE_USAGE_LOG_API}/${isDeleted}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Fetched Logs:", data); // Debug response
+                const logsListDiv = document.getElementById('logsList');
+                logsListDiv.innerHTML = '';
+
+                if (!data || data.length === 0) {
+                    logsListDiv.innerHTML = '<p class="result-style">No logs found.</p>';
+                    return;
+                }
+
+                data.forEach((log) => {
+                    const logDiv = document.createElement('div');
+                    logDiv.classList.add('result-style');
+                    logDiv.innerHTML = `
+                <strong>Log ID:</strong> ${log.log_id}<br>
+                <strong>Vehicle ID:</strong> ${log.vehicle_id}<br>
+                <strong>Employee ID:</strong> ${log.employee_id}<br>
+                <strong>Employee Name:</strong> ${log.employee_name}<br>
+                <strong>Date of Usage:</strong> ${log.date_of_usage}<br>
+                <strong>Purpose:</strong> ${log.purpose}<br>
+                <strong>Distance Travelled:</strong> ${log.distance_travelled} km<br>
+                <strong>Is Deleted:</strong> ${log.is_deleted === 0 ? "No" : "Yes"}<br>
+                <hr>
+            `;
+                    logsListDiv.appendChild(logDiv);
+                });
+            } catch (error) {
+                document.getElementById('logsList').innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
             }
         });
 
 
-
-            // View All Vehicle Usage Logs
-            document.getElementById('viewLogsForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                // Get the selected filter value (0 or 1)
-                const isDeleted = document.querySelector('input[name="filter"]:checked').value;
-
-                try {
-                    // Fetch logs with the selected filter
-                    const response = await fetch(`${VEHICLE_USAGE_LOG_API}/${isDeleted}`);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    const logsListDiv = document.getElementById('logsList');
-                    logsListDiv.innerHTML = ''; // Clear previous content
-
-                    // Populate the logs list
-                    data.forEach(log => {
-                        const logInfo = `
-                <div>
-                    <strong>Log ID:</strong> ${log.log_id}<br>
-                    <strong>Vehicle ID:</strong> ${log.vehicle_id}<br>
-                    <strong>Employee ID:</strong> ${log.employee_id}<br>
-                    <strong>Employee Name:</strong> ${log.employee_name}<br>
-                    <strong>Date of Usage:</strong> ${log.date_of_usage}<br>
-                    <strong>Purpose:</strong> ${log.purpose}<br>
-                    <strong>Distance Travelled:</strong> ${log.distance_travelled} km<br>
-                    <strong>Is deleted:</strong> ${log.is_deleted == 0 ? false : true} <br>
-                    <hr>
-                </div>
-            `;
-                        logsListDiv.innerHTML += logInfo;
-                    });
-                } catch (error) {
-                    document.getElementById('logsList').innerText = `Error: ${error.message}`;
-                }
-            });
-
-       
 
         // Delete Vehicle Usage Log
         document.getElementById('deleteVehicleUsageLogForm').addEventListener('submit', async (e) => {
@@ -146,11 +159,12 @@
                     method: 'DELETE',
                 });
                 const data = await response.json();
-                document.getElementById('deleteLogResult').innerText = JSON.stringify(data, null, 2);
+                document.getElementById('deleteLogResult').innerHTML = `<p>Log Deleted:</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (error) {
-                document.getElementById('deleteLogResult').innerText = `Error: ${error.message}`;
+                document.getElementById('deleteLogResult').innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
             }
         });
     </script>
 </body>
+
 </html>
