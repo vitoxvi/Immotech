@@ -28,12 +28,10 @@
     </form>
     <div id="createResult"></div>
 
-
+    <hr>
 
     <!-- View Apartments -->
     <h2>View Apartments</h2>
-    <label for="propertyIdFilter">Filter by Property ID (Leave blank for all):</label>
-    <input type="number" id="propertyIdFilter" name="propertyIdFilter">
     <button id="viewApartmentsButton">View Apartments</button>
     <div id="apartmentsList"></div>
 
@@ -46,19 +44,13 @@
         <input type="number" id="updateId" name="updateId" required><br>
 
         <label for="updateSizeSqm">Size (sqm):</label>
-        <input type="number" id="updateSizeSqm" name="updateSizeSqm" required><br>
+        <input type="text" id="updateSizeSqm" name="updateSizeSqm" required><br>
 
         <label for="updateRent">Rent:</label>
         <input type="number" id="updateRent" name="updateRent" required><br>
 
         <label for="updateRooms">Rooms:</label>
         <input type="number" id="updateRooms" name="updateRooms"><br>
-
-        <label for="updateAddress">Address:</label>
-        <input type="text" id="updateAddress" name="updateAddress" required><br>
-
-        <label for="updatePropertyId">Property ID:</label>
-        <input type="number" id="updatePropertyId" name="updatePropertyId" required><br>
 
         <button type="submit">Update Apartment</button>
     </form>
@@ -98,14 +90,10 @@
             }
         });
 
-
         // View Apartments
         document.getElementById('viewApartmentsButton').addEventListener('click', async () => {
-            const propertyId = document.getElementById('propertyIdFilter').value;
-            const url = propertyId ? `${APARTMENT_API}?property_id=${propertyId}` : APARTMENT_API;
-
             try {
-                const response = await fetch(url);
+                const response = await fetch(APARTMENT_API);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -122,8 +110,7 @@
                             <strong>Size (sqm):</strong> ${apartment.size_sqm}<br>
                             <strong>Rent:</strong> ${apartment.rent}<br>
                             <strong>Rooms:</strong> ${apartment.rooms || 'N/A'}<br>
-                            <strong>Address:</strong> ${apartment.address}<br>
-                            <strong>Property ID:</strong> ${apartment.property_id}<br>
+                            <strong>Unit ID:</strong> ${apartment.unit_id}<br>
                             <button onclick="deleteApartment(${apartment.id})">Delete</button>
                             <hr>
                         </div>
@@ -166,9 +153,7 @@
             const payload = {
                 size_sqm: document.getElementById('updateSizeSqm').value,
                 rent: document.getElementById('updateRent').value,
-                rooms: document.getElementById('updateRooms').value,
-                address: document.getElementById('updateAddress').value,
-                property_id: document.getElementById('updatePropertyId').value
+                rooms: document.getElementById('updateRooms').value || 0,
             };
 
             try {
