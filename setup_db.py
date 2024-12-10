@@ -106,9 +106,9 @@ CREATE INDEX IF NOT EXISTS idx_property_id ON Unit (property_id);
 
 CREATE TABLE IF NOT EXISTS Apartment (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    size_sqm TEXT NOT NULL,
+    size_sqm REAL NOT NULL,
     rent REAL NOT NULL CHECK (rent >= 0),
-    rooms INTEGER CHECK (rooms >= 0),
+    rooms REAL CHECK (rooms >= 0),
     designation TEXT,
     unit_id INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,

@@ -32,7 +32,7 @@ def create_apartment():
         # Parse parameters
         size_sqm = str(data.get('size_sqm'))  # Ensure it's a string for TEXT type
         rent = float(data.get('rent'))  # Ensure rent is a valid float
-        rooms = int(data.get('rooms')) if data.get('rooms') is not None else 0
+        rooms = float(data.get('rooms')) if data.get('rooms') is not None else 0
         unit_id = int(data.get('unit_id')) if data.get('unit_id') else None  # Updated
 
         # Validate required fields
@@ -140,7 +140,7 @@ def update_apartment(apartment_id):
         # Parse parameters
         size_sqm = str(data.get('size_sqm'))  # Ensure it's a string for TEXT type
         rent = float(data.get('rent'))  # Ensure rent is a valid float
-        rooms = int(data.get('rooms')) if data.get('rooms') is not None else 0
+        rooms = float(data.get('rooms')) if data.get('rooms') is not None else 0
 
         # Validate required fields
         if not all([size_sqm, rent, rooms]):
