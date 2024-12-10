@@ -37,10 +37,22 @@
 
         <hr>
 
-        <!-- View Apartments -->
-        <h2>View Apartments</h2>
-        <button id="viewApartmentsButton" class="primary-button">View Apartments</button>
-        <div id="apartmentsList" class="list-style"></div>
+        <!-- Filter Apartments -->
+        <h2>Filter Apartments</h2>
+        <form id="filterApartmentsForm" class="form-style">
+            <label for="filterType">Filter by:</label>
+            <select id="filterType" name="filterType" required>
+                <option value="unit_id">Unit ID</option>
+                <option value="property_id">Property ID</option>
+            </select><br>
+
+            <label for="filterValue">Enter ID:</label>
+            <input type="number" id="filterValue" name="filterValue" required><br>
+
+            <button type="submit" class="primary-button">Apply Filter</button>
+        </form>
+        <div id="filteredApartmentsList" class="list-style"></div>
+
 
         <!-- Update Apartment Dialog -->
         <div id="updateApartmentDialog" class="dialog" style="display: none;">
@@ -95,13 +107,18 @@
             }
         });
 
-        // View Apartments
-        document.getElementById('viewApartmentsButton').addEventListener('click', async () => {
-            const apartmentsListDiv = document.getElementById('apartmentsList');
-            apartmentsListDiv.innerHTML = ''; // Clear previous content
+        // Filter Apartments
+        document.getElementById('filterApartmentsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const filterType = document.getElementById('filterType').value;
+            const filterValue = document.getElementById('filterValue').value;
+
+            const filteredApartmentsListDiv = document.getElementById('filteredApartmentsList');
+            filteredApartmentsListDiv.innerHTML = ''; // Clear previous content
 
             try {
-                const response = await fetch(APARTMENT_API);
+                const response = await fetch(`${APARTMENT_API}?${filterType}=${filterValue}`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -110,35 +127,31 @@
                 const data = await response.json();
 
                 if (data.length === 0) {
-                    apartmentsListDiv.innerHTML = '<p>No apartments found.</p>';
+                    filteredApartmentsListDiv.innerHTML = '<p>No apartments found for the given filter.</p>';
                     return;
                 }
 
                 data.forEach((apartment) => {
                     const apartmentDiv = document.createElement('div');
                     apartmentDiv.classList.add('result-style');
-                    apartmentDiv.setAttribute('data-apartment-id', apartment.id);
-                    apartmentDiv.setAttribute('data-size-sqm', apartment.size_sqm);
-                    apartmentDiv.setAttribute('data-rent', apartment.rent);
-                    apartmentDiv.setAttribute('data-rooms', apartment.rooms || 0);
-                    apartmentDiv.setAttribute('data-unit-id', apartment.unit_id);
-
                     apartmentDiv.innerHTML = `
-                        <strong>ID:</strong> ${apartment.id}<br>
-                        <strong>Size (sqm):</strong> ${apartment.size_sqm}<br>
-                        <strong>Rent:</strong> ${apartment.rent}<br>
-                        <strong>Rooms:</strong> ${apartment.rooms || 'N/A'}<br>
-                        <strong>Unit ID:</strong> ${apartment.unit_id}<br>
-                        <button class="secondary-button" onclick="openUpdateDialog(${apartment.id})">Update</button>
-                        <button class="danger-button" onclick="deleteApartment(${apartment.id})">Delete</button>
-                        <hr>
-                    `;
-                    apartmentsListDiv.appendChild(apartmentDiv);
+                <strong>ID:</strong> ${apartment.apartment_id}<br>
+                <strong>Size (sqm):</strong> ${apartment.size_sqm}<br>
+                <strong>Rent:</strong> ${apartment.rent}<br>
+                <strong>Rooms:</strong> ${apartment.rooms || 'N/A'}<br>
+                <strong>Unit ID:</strong> ${apartment.unit_id} (${apartment.unit_name || 'Unnamed'})<br>
+                <strong>Unit Address:</strong> ${apartment.unit_address || 'N/A'}<br>
+                <strong>Property ID:</strong> ${apartment.property_id} (${apartment.property_name || 'Unnamed'})<br>
+                <strong>Property Address:</strong> ${apartment.property_address || 'N/A'}<br>
+                <hr>
+            `;
+                    filteredApartmentsListDiv.appendChild(apartmentDiv);
                 });
             } catch (error) {
-                apartmentsListDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+                filteredApartmentsListDiv.innerHTML = `<p>Error: ${error.message}</p>`;
             }
         });
+
 
         // Open Update Dialog
         function openUpdateDialog(apartmentId) {

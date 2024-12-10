@@ -47,22 +47,28 @@
 
         <hr>
 
-        <!-- View All Vehicle Usage Logs -->
-        <h2>View All Vehicle Usage Logs</h2>
-        <form id="viewLogsForm" class="form-style">
-            <label for="logFilter">Filter by Log Type:</label>
-            <select id="logFilter" name="logFilter">
+        <h2>Filter Vehicle Usage Logs</h2>
+        <form id="filterLogsForm" class="form-style">
+            <label for="filterType">Filter by:</label>
+            <select id="filterType" name="filterType" required>
+                <option value="vehicle_id">Vehicle ID</option>
+                <option value="employee_id">Employee ID</option>
+            </select><br>
+
+            <label for="filterValue">Enter ID:</label>
+            <input type="number" id="filterValue" name="filterValue" required><br>
+
+            <label for="logFilterForDeleted">Include Deleted Logs:</label>
+            <select id="logFilterForDeleted" name="logFilterForDeleted">
                 <option value="0">Without Soft-Deleted Entries</option>
                 <option value="1">Only Soft-Deleted Entries</option>
                 <option value="2">Both</option>
-            </select>
-            <br>
-            <button type="submit" class="primary-button">View Logs</button>
+            </select><br>
+
+            <button type="submit" class="primary-button">Apply Filter</button>
         </form>
+        <div id="filteredLogsList" class="list-style"></div>
 
-        <div id="logsList" class="list-style"></div>
-
-        <hr>
 
         <!-- Delete Vehicle Usage Log -->
         <h2>Delete Vehicle Usage Log</h2>
@@ -102,49 +108,6 @@
             }
         });
 
-        // View All Vehicle Usage Logs
-        document.getElementById('viewLogsForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            // Ensure the filter value is passed correctly
-            const isDeleted = parseInt(document.getElementById('logFilter').value, 10);
-
-            try {
-                const response = await fetch(`${VEHICLE_USAGE_LOG_API}/${isDeleted}`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log("Fetched Logs:", data); // Debug response
-                const logsListDiv = document.getElementById('logsList');
-                logsListDiv.innerHTML = '';
-
-                if (!data || data.length === 0) {
-                    logsListDiv.innerHTML = '<p class="result-style">No logs found.</p>';
-                    return;
-                }
-
-                data.forEach((log) => {
-                    const logDiv = document.createElement('div');
-                    logDiv.classList.add('result-style');
-                    logDiv.innerHTML = `
-                <strong>Log ID:</strong> ${log.log_id}<br>
-                <strong>Vehicle ID:</strong> ${log.vehicle_id}<br>
-                <strong>Employee ID:</strong> ${log.employee_id}<br>
-                <strong>Employee Name:</strong> ${log.employee_name}<br>
-                <strong>Date of Usage:</strong> ${log.date_of_usage}<br>
-                <strong>Purpose:</strong> ${log.purpose}<br>
-                <strong>Distance Travelled:</strong> ${log.distance_travelled} km<br>
-                <strong>Is Deleted:</strong> ${log.is_deleted === 0 ? "No" : "Yes"}<br>
-                <hr>
-            `;
-                    logsListDiv.appendChild(logDiv);
-                });
-            } catch (error) {
-                document.getElementById('logsList').innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
-            }
-        });
 
 
 
@@ -164,6 +127,53 @@
                 document.getElementById('deleteLogResult').innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
             }
         });
+
+        // Filter Logs by Vehicle ID or Employee ID
+        document.getElementById('filterLogsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const filterType = document.getElementById('filterType').value;
+            const filterValue = document.getElementById('filterValue').value;
+            const isDeleted = parseInt(document.getElementById('logFilterForDeleted').value, 10);
+
+            try {
+                const response = await fetch(
+                    `${VEHICLE_USAGE_LOG_API}/${isDeleted}?${filterType}=${filterValue}`
+                );
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const filteredLogsListDiv = document.getElementById('filteredLogsList');
+                filteredLogsListDiv.innerHTML = '';
+
+                if (!data || data.length === 0) {
+                    filteredLogsListDiv.innerHTML = '<p class="result-style">No logs found with the provided filter.</p>';
+                    return;
+                }
+
+                data.forEach((log) => {
+                    const logDiv = document.createElement('div');
+                    logDiv.classList.add('result-style');
+                    logDiv.innerHTML = `
+                <strong>Log ID:</strong> ${log.log_id}<br>
+                <strong>Vehicle ID:</strong> ${log.vehicle_id}<br>
+                <strong>Employee ID:</strong> ${log.employee_id}<br>
+                <strong>Employee Name:</strong> ${log.employee_name}<br>
+                <strong>Date of Usage:</strong> ${log.date_of_usage}<br>
+                <strong>Purpose:</strong> ${log.purpose}<br>
+                <strong>Distance Travelled:</strong> ${log.distance_travelled} km<br>
+                <strong>Is Deleted:</strong> ${log.is_deleted === 0 ? "No" : "Yes"}<br>
+                <hr>
+            `;
+                    filteredLogsListDiv.appendChild(logDiv);
+                });
+            } catch (error) {
+                document.getElementById('filteredLogsList').innerHTML = `<p class="result-style">Error: ${error.message}</p>`;
+            }
+        });
+
     </script>
 </body>
 

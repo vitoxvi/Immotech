@@ -70,16 +70,55 @@ def create_apartment():
         return jsonify({"error": str(e)}), 500
 
 
-# READ all apartments
+#READ all apartments with optional filters
 @apartment_bp.route('/backend/apartments', methods=['GET'])
 def get_all_apartments():
-    query = "SELECT * FROM Apartment"
-    result = query_db(query)
-    if "error" in result:
-        return jsonify(result), 500
+    # Retrieve optional filters from query parameters
+    unit_id = request.args.get('unit_id')
+    property_id = request.args.get('property_id')
 
-    apartments = [dict(row) for row in result]
-    return jsonify(apartments), 200
+    # Base query with necessary joins
+    query = """
+    SELECT 
+        Apartment.id AS apartment_id,
+        Apartment.size_sqm,
+        Apartment.rent,
+        Apartment.rooms,
+        Apartment.designation,
+        Apartment.unit_id,
+        Unit.name AS unit_name,
+        Unit.address AS unit_address,
+        Property.id AS property_id,
+        Property.name AS property_name,
+        Property.address AS property_address
+    FROM Apartment
+    LEFT JOIN Unit ON Apartment.unit_id = Unit.id
+    LEFT JOIN Property ON Unit.property_id = Property.id
+    WHERE 1 = 1
+    """
+    filters = []
+
+    # Add optional filters dynamically
+    if unit_id:
+        query += " AND Unit.id = ?"
+        filters.append(unit_id)
+    if property_id:
+        query += " AND Property.id = ?"
+        filters.append(property_id)
+
+    try:
+        # Execute the query with the filters
+        result = query_db(query, tuple(filters))
+        if "error" in result:
+            return jsonify(result), 500
+
+        # Convert results to a list of dictionaries and return as JSON
+        apartments = [dict(row) for row in result]
+        return jsonify(apartments), 200
+    except Exception as e:
+        # Handle errors gracefully
+        return jsonify({"error": str(e)}), 500
+
 
 
 # READ a single apartment by ID

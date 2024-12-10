@@ -50,10 +50,17 @@ def create_vehicle_usage_log():
     return jsonify({"message": "Vehicle usage log created successfully"}), 201
 
 
-# READ all vehicle usage logs (join with Person table)
+
+# read all vehicle usage logs with optional filters
 @vehicle_usage_log_bp.route('/backend/vehicle_usage_log/<int:is_deleted>', methods=['GET'])
 def get_all_vehicle_usage_logs(is_deleted):
     print(f"is_deleted received: {is_deleted}")
+
+    # Retrieve optional filters from query parameters
+    vehicle_id = request.args.get('vehicle_id')
+    employee_id = request.args.get('employee_id')
+
+    # Base query with conditions for soft deletion
     query = """
     SELECT 
         VehicleUsageLog.id AS log_id,
@@ -69,15 +76,27 @@ def get_all_vehicle_usage_logs(is_deleted):
     JOIN Person ON Employee.id = Person.id
     WHERE (VehicleUsageLog.is_deleted = ? OR ? = 2)
     """
+    filters = [is_deleted, is_deleted]
+
+    # Add optional filters dynamically
+    if vehicle_id:
+        query += " AND VehicleUsageLog.vehicle_id = ?"
+        filters.append(vehicle_id)
+    if employee_id:
+        query += " AND VehicleUsageLog.employee_id = ?"
+        filters.append(employee_id)
+
     try:
-        result = query_db(query, (is_deleted, is_deleted))
-        print(result)
+        # Execute the query with the filters
+        result = query_db(query, tuple(filters))
         if "error" in result:
             return jsonify(result), 500
 
+        # Convert results to a list of dictionaries and return as JSON
         vehicle_usage_logs = [dict(row) for row in result]
         return jsonify(vehicle_usage_logs), 200
     except Exception as e:
+        # Handle errors gracefully
         return jsonify({"error": str(e)}), 500
 
 
