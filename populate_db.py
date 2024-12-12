@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 
 DATABASE_NAME = "database.db"
 
@@ -30,9 +31,7 @@ def populate_database():
             INSERT INTO Employee (person_id, role, employment_rate)
             VALUES (?, ?, ?);
         """, [
-            (alice_id, "Manager", 100),
             (bob_id, "Technician", 80),
-            (carol_id, "Cleaner", 50),
         ])
 
         # Populate the Tenant table
@@ -41,21 +40,16 @@ def populate_database():
             VALUES (?, ?);
         """, [
             (alice_id, 1),
-            (bob_id, 0),
-            (carol_id, 1),
         ])
 
         # Get tenant IDs for references
         alice_tenant_id = cursor.execute("SELECT id FROM Tenant WHERE person_id = ?", (alice_id,)).fetchone()[0]
-        bob_tenant_id = cursor.execute("SELECT id FROM Tenant WHERE person_id = ?", (bob_id,)).fetchone()[0]
 
         # Populate the BoardMember table
         cursor.executemany("""
             INSERT INTO BoardMember (person_id, role)
             VALUES (?, ?);
         """, [
-            (alice_id, "President"),
-            (bob_id, "Treasurer"),
             (carol_id, "Secretary"),
         ])
 
@@ -64,41 +58,36 @@ def populate_database():
             INSERT INTO Property (name, address, property_document)
             VALUES (?, ?, ?);
         """, [
-            ("Downtown Apartments", "123 City Center", None),
-            ("Greenwood Complex", "456 Suburb Lane", None),
-            ("Skyline Towers", "789 Metro Blvd", None),
+            ("Studentenhof", "Schülerstrasse 1-3, 9000 St.Gallen", None),
         ])
 
         # Get property IDs for references
-        downtown_id = cursor.execute("SELECT id FROM Property WHERE name = 'Downtown Apartments'").fetchone()[0]
-        greenwood_id = cursor.execute("SELECT id FROM Property WHERE name = 'Greenwood Complex'").fetchone()[0]
+        downtown_id = cursor.execute("SELECT id FROM Property WHERE name = 'Studentenhof'").fetchone()[0]
 
         # Populate the Unit table
         cursor.executemany("""
             INSERT INTO Unit (name, address, property_id)
             VALUES (?, ?, ?);
         """, [
-            ("Unit A", "123 City Center - Unit A", downtown_id),
-            ("Unit B", "123 City Center - Unit B", downtown_id),
-            ("Unit C", "456 Suburb Lane - Unit C", greenwood_id),
+            ("Studentenheim A", "Schülerstrasse 1, 9000 St.Gallen", downtown_id),
+            ("Studentenheim B", "Schülerstrasse 2, 9000 St.Gallen", downtown_id),
         ])
 
         # Get unit IDs for references
-        unit_a_id = cursor.execute("SELECT id FROM Unit WHERE name = 'Unit A'").fetchone()[0]
+        unit_a_id = cursor.execute("SELECT id FROM Unit WHERE name = 'Studentenheim A'").fetchone()[0]
 
         # Populate the Apartment table
         cursor.executemany("""
             INSERT INTO Apartment (size_sqm, rent, rooms, designation, unit_id)
             VALUES (?, ?, ?, ?, ?);
         """, [
-            ("50 sqm", 1200, 2, "Apartment 101", unit_a_id),
-            ("75 sqm", 1800, 3, "Apartment 102", unit_a_id),
-            ("35 sqm", 800, 1, "Apartment 103", unit_a_id),
+            (50, 1200, 2, "Apartment A01", unit_a_id),
+            (75, 1800, 3, "Apartment A02", unit_a_id),
+            (35, 800, 1, "Apartment A03", unit_a_id),
         ])
 
         # Get apartment IDs for references
-        apartment_101_id = cursor.execute("SELECT id FROM Apartment WHERE designation = 'Apartment 101'").fetchone()[0]
-        apartment_102_id = cursor.execute("SELECT id FROM Apartment WHERE designation = 'Apartment 102'").fetchone()[0]
+        apartment_101_id = cursor.execute("SELECT id FROM Apartment WHERE designation = 'Apartment A01'").fetchone()[0]
 
         # Populate the ParkingSpot table
         cursor.executemany("""
@@ -106,22 +95,49 @@ def populate_database():
             VALUES (?, ?, ?, ?);
         """, [
             (100, "P1", "Motorbike", downtown_id),
-            (150, "P2", "Indoor", downtown_id),
-            (50, "P3", "Outdoor", greenwood_id),
+            (100, "P2", "Motorbike", downtown_id),
+            (150, "P3", "Indoor", downtown_id),
+            (150, "P4", "Indoor", downtown_id),
         ])
 
         # Get parking spot IDs for references
         parking_spot_p1_id = cursor.execute("SELECT id FROM ParkingSpot WHERE spot_number = 'P1'").fetchone()[0]
+        parking_spot_p4_id = cursor.execute("SELECT id FROM ParkingSpot WHERE spot_number = 'P4'").fetchone()[0]
 
         # Populate the Contract table
         cursor.executemany("""
             INSERT INTO Contract (tenant_id, rental_type, rental_id, start_date, end_date, is_deleted)
             VALUES (?, ?, ?, ?, ?, ?);
         """, [
-            (alice_tenant_id, "Apartment", apartment_101_id, "2023-01-01", "2024-01-01", 0),
-            (alice_tenant_id, "Apartment", apartment_102_id, "2023-02-01", None, 0),
-            (bob_tenant_id, "ParkingSpot", parking_spot_p1_id, "2023-03-01", "2024-03-01", 0),
+            (alice_tenant_id, "Apartment", apartment_101_id, "2023-01-01", "2025-11-01", 0),
+            (alice_tenant_id, "ParkingSpot", parking_spot_p1_id, "2023-02-01", "2025-11-01", 0),
+            (alice_tenant_id, "ParkingSpot", parking_spot_p4_id, "2023-02-01", "2025-11-01", 0),
         ])
+
+
+        # Insert a new vehicle
+        cursor.execute("""
+            INSERT INTO Vehicle (name, license_plate) 
+            VALUES (?, ?);
+        """, ("vw-pasat", "SG12345"))
+
+        # Get the vehicle_id of the newly inserted vehicle
+        result = cursor.execute("SELECT id FROM Vehicle WHERE name = ?", ("vw-pasat",)).fetchone()
+        if result is None:
+            raise ValueError("Vehicle 'vw-pasat' not found in the database.")
+        vehicle_id = result[0]
+
+
+
+        # # Insert three VehicleUsageLog entries
+        # cursor.executemany("""
+        #     INSERT INTO VehicleUsageLog (vehicle_id, employee_id, date_of_usage, purpose, distance_travelled) 
+        #     VALUES (?, ?, ?, ?, ?);
+        # """, [
+        #     (vehicle_id, bob_id, datetime.now().strftime('%Y-%m-%d'), 'Delivery', 12.5),
+        #     (vehicle_id, bob_id, datetime.now().strftime('%Y-%m-%d'), 'Repair', 8.0),
+        #     (vehicle_id, bob_id, datetime.now().strftime('%Y-%m-%d'), 'Private', 25.3),
+        # ])
 
         connection.commit()
         print("Database populated successfully!")
