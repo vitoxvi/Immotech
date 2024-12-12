@@ -11,22 +11,21 @@ def query_db(query, args=(), one=False, commit=False, fetch_last_id=False):
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row  # Fetch rows as dictionaries
     cursor = conn.cursor()
-    result = None
     try:
         cursor.execute(query, args)
         if commit:
             conn.commit()
             if fetch_last_id:
-                result = {"id": cursor.lastrowid}  # Return the last inserted row ID
-            else:
-                result = {"status": "success"}
+                return {"id": cursor.lastrowid}  # Return the last inserted row ID
+            return {"status": "success"}
         else:
-            result = cursor.fetchall()
+            rows = cursor.fetchall()
+            return [dict(row) for row in rows] if rows else []
     except sqlite3.Error as e:
-        result = {"error": str(e)}
+        return {"error": str(e)}
     finally:
         conn.close()
-    return (result[0] if result else None) if one and not commit else result
+
 
 
 
@@ -164,20 +163,21 @@ def get_contracts():
     JOIN Tenant ON Contract.tenant_id = Tenant.id
     JOIN Person ON Tenant.person_id = Person.id
     WHERE Contract.is_deleted = 0
-    ORDER BY Tenant.id, Contract.start_date DESC
     """
-
+    
     params = []
     if rental_type:
         query += " AND Contract.rental_type = ?"
         params.append(rental_type)
 
+    query += " ORDER BY Tenant.id, Contract.start_date DESC"
+
     result = query_db(query, params)
-    if "error" in result:
+    if isinstance(result, dict) and "error" in result:
         return jsonify(result), 500
 
-    contracts = [dict(row) for row in result]
-    return jsonify(contracts), 200
+    return jsonify(result), 200
+
 
 
     
