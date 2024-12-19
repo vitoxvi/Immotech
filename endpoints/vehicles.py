@@ -48,27 +48,25 @@ def create_vehicle():
     return jsonify({"message": "Vehicle created successfully"}), 201
 
 
-# READ all vehicles
-@vehicle_bp.route('/backend/vehicles', methods=['GET'])
-def get_all_vehicles():
-    query = "SELECT * FROM Vehicle"
-    result = query_db(query)
-    if "error" in result:
-        return jsonify(result), 500
-
-    vehicles = [dict(row) for row in result]
-    return jsonify(vehicles), 200
-
-
-# READ a single vehicle by ID
+#Fetch one or multiple vehicles
 @vehicle_bp.route('/backend/vehicles/<int:vehicle_id>', methods=['GET'])
-def get_vehicle(vehicle_id):
-    query = "SELECT * FROM Vehicle WHERE id = ?"
-    result = query_db(query, (vehicle_id,), one=True)
-    if not result:
-        return jsonify({"error": "Vehicle not found"}), 404
+def get_vehicles(vehicle_id):
+    if vehicle_id == 0:
+        # Fetch all vehicles
+        query = "SELECT * FROM Vehicle"
+        result = query_db(query)
+        if "error" in result:
+            return jsonify(result), 500
+        vehicles = [dict(row) for row in result]
+        return jsonify(vehicles), 200
+    else:
+        # Fetch a specific vehicle by ID
+        query = "SELECT * FROM Vehicle WHERE id = ?"
+        result = query_db(query, (vehicle_id,), one=True)
+        if not result:
+            return jsonify([]), 200  # Return an empty array if not found
+        return jsonify([dict(result)]), 200  # Wrap the single result in an array
 
-    return jsonify(dict(result)), 200
 
 
 # UPDATE an existing vehicle
