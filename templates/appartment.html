@@ -134,17 +134,25 @@
                 data.forEach((apartment) => {
                     const apartmentDiv = document.createElement('div');
                     apartmentDiv.classList.add('result-style');
-                    apartmentDiv.innerHTML = `
-                <strong>ID:</strong> ${apartment.apartment_id}<br>
-                <strong>Size (sqm):</strong> ${apartment.size_sqm}<br>
-                <strong>Rent:</strong> ${apartment.rent}<br>
-                <strong>Rooms:</strong> ${apartment.rooms || 'N/A'}<br>
-                <strong>Unit ID:</strong> ${apartment.unit_id} (${apartment.unit_name || 'Unnamed'})<br>
-                <strong>Unit Address:</strong> ${apartment.unit_address || 'N/A'}<br>
-                <strong>Property ID:</strong> ${apartment.property_id} (${apartment.property_name || 'Unnamed'})<br>
-                <strong>Property Address:</strong> ${apartment.property_address || 'N/A'}<br>
-                <hr>
-            `;
+                    apartmentDiv.innerHTML = apartmentDiv.innerHTML = `
+                        <strong>ID:</strong> ${apartment.apartment_id}<br>
+                        <strong>Size (sqm):</strong> ${apartment.size_sqm}<br>
+                        <strong>Rent:</strong> ${apartment.rent}<br>
+                        <strong>Rooms:</strong> ${apartment.rooms || 'N/A'}<br>
+                        <strong>Unit ID:</strong> ${apartment.unit_id} (${apartment.unit_name || 'Unnamed'})<br>
+                        <strong>Unit Address:</strong> ${apartment.unit_address || 'N/A'}<br>
+                        <strong>Property ID:</strong> ${apartment.property_id} (${apartment.property_name || 'Unnamed'})<br>
+                        <strong>Property Address:</strong> ${apartment.property_address || 'N/A'}<br>
+                        <button onclick="openUpdateDialog(${apartment.apartment_id})" class="primary-button">Update</button>
+                        <button onclick="deleteApartment(${apartment.apartment_id})" class="secondary-button">Delete</button>
+                        <hr>
+                    `;
+                    apartmentDiv.setAttribute('data-apartment-id', apartment.apartment_id);
+                    apartmentDiv.setAttribute('data-size-sqm', apartment.size_sqm);
+                    apartmentDiv.setAttribute('data-rent', apartment.rent);
+                    apartmentDiv.setAttribute('data-rooms', apartment.rooms || 0);
+                    apartmentDiv.setAttribute('data-unit-id', apartment.unit_id);
+
                     filteredApartmentsListDiv.appendChild(apartmentDiv);
                 });
             } catch (error) {
@@ -204,7 +212,7 @@
                 const data = await response.json();
                 alert(data.message || 'Apartment updated successfully!');
                 closeUpdateDialog();
-                document.getElementById('viewApartmentsButton').click(); // Refresh the list
+                document.getElementById('filterApartmentsForm').dispatchEvent(new Event('submit'));
             } catch (error) {
                 alert(`Error updating apartment: ${error.message}`);
             }
@@ -227,7 +235,7 @@
 
                 const data = await response.json();
                 alert(data.message || 'Apartment deleted successfully!');
-                document.getElementById('viewApartmentsButton').click(); // Refresh the list
+                document.getElementById('filterApartmentsForm').dispatchEvent(new Event('submit'));
             } catch (error) {
                 alert(`Error: ${error}`);
             }
