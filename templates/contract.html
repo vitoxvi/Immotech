@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contract Management</title>
+    <link rel="stylesheet" href="/static/styles.css">
     <script>
         const CONTRACT_API = '/backend/contracts';
 
@@ -21,11 +23,13 @@
                 cooperativeField.style.display = 'block';
             }
         }
+
         // Toggle rental-specific fields
         function toggleRentalFields() {
             const rentalType = document.getElementById('rentalType').value;
             const apartmentFields = document.getElementById('apartmentFields');
             const parkingFields = document.getElementById('parkingFields');
+
             if (rentalType === 'Apartment') {
                 apartmentFields.style.display = 'block';
                 parkingFields.style.display = 'none';
@@ -37,6 +41,7 @@
                 parkingFields.style.display = 'none';
             }
         }
+
         // Fetch and display contracts
         async function fetchContracts() {
             const rentalType = document.getElementById('rentalTypeFilter').value;
@@ -76,14 +81,15 @@
                 `;
                 tenantContracts.forEach(contract => {
                     const contractDiv = document.createElement('div');
+                    contractDiv.classList.add('contract-entry');
                     contractDiv.innerHTML = `
                         <strong>Contract ID:</strong> ${contract.contract_id}<br>
                         <strong>Rental Type:</strong> ${contract.rental_type}<br>
                         <strong>Rental ID:</strong> ${contract.rental_id}<br>
                         <strong>Start Date:</strong> ${contract.start_date}<br>
                         <strong>End Date:</strong> ${contract.end_date || 'Indefinite'}<br>
-                        <button onclick="softDeleteContract(${contract.contract_id})">Delete</button>
-                        <button onclick="updateContract(${contract.contract_id})">Update End Date</button>
+                        <button class="danger-button" onclick="softDeleteContract(${contract.contract_id})">Delete</button>
+                        <button class="primary-button" onclick="updateContract(${contract.contract_id})">Update End Date</button>
                         <hr>
                     `;
                     tenantDiv.appendChild(contractDiv);
@@ -124,30 +130,37 @@
                 alert(`Error updating contract: ${error.message}`);
             }
         }
+
         // Handle contract creation
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('createContractForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
+
                 const tenantId = document.getElementById('tenantId').value;
                 const rentalType = document.getElementById('rentalType').value;
+
                 // Determine rental ID based on rental type
                 const rentalId = rentalType === 'Apartment'
                     ? document.getElementById('apartmentId').value
                     : document.getElementById('parkingId').value;
+
                 // Validate mandatory fields
                 if (!rentalType) {
                     alert('Rental type is required.');
                     return;
                 }
+
                 if (!rentalId) {
                     alert('Rental ID is required.');
                     return;
                 }
+
                 const startDate = document.getElementById('startDate').value;
                 if (!startDate) {
                     alert('Start date is required.');
                     return;
                 }
+
                 // Construct the payload
                 const payload = {
                     tenant_id: tenantId || null,
@@ -157,6 +170,7 @@
                     start_date: startDate,
                     end_date: document.getElementById('endDate').value || null,
                 };
+
                 // Include new tenant details if no tenant ID is provided
                 if (!tenantId) {
                     payload.first_name = document.getElementById('firstName').value;
@@ -166,16 +180,17 @@
                     payload.phone_number = document.getElementById('phoneNumber').value;
                     payload.email = document.getElementById('email').value;
                 }
+
                 try {
                     const response = await fetch(CONTRACT_API, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload),
                     });
+
                     const data = await response.json();
                     if (response.ok) {
                         document.getElementById('createContractResult').innerText = JSON.stringify(data, null, 2);
-                        //fetchContracts(); // Refresh contracts after successful creation
                     } else {
                         alert(`Error: ${data.error}`);
                     }
@@ -186,69 +201,95 @@
         });
     </script>
 </head>
+
 <body>
-    <h1>Contract Management</h1>
+    <main>
+        <header>
+            <h1>Contract Management</h1>
+        </header>
 
-    <!-- Filter Contracts -->
-    <h2>View Contracts</h2>
-    <label for="rentalTypeFilter">Filter by Rental Type:</label>
-    <select id="rentalTypeFilter" name="rentalTypeFilter">
-        <option value="">All</option>
-        <option value="Apartment">Apartment</option>
-        <option value="ParkingSpot">Parking Spot</option>
-    </select>
-    <button onclick="fetchContracts()">Fetch Contracts</button>
+        <button onclick="window.location.href='/'" class="back-button">Go Back</button>
 
-    <div id="contractList"></div>
-    <!-- Create Contract -->
-    <h2>Create New Contract</h2>
-    <form id="createContractForm">
-        <h3>Tenant Details</h3>
-        <label for="tenantId">Tenant ID (Leave blank to create a new tenant):</label>
-        <input type="number" id="tenantId" name="tenantId" min="1" placeholder="Existing Tenant ID" oninput="toggleTenantFields()"><br>
-        <div id="cooperativeField" style="display: block;">
-            <label for="isCooperativeMember">Is Cooperative Member:</label>
-            <select id="isCooperativeMember" name="isCooperativeMember">
-                <option value="1">Yes</option>
-                <option value="0" selected>No</option>
-            </select><br>
-        </div>
-        <div id="newTenantFields" style="display: block;">
-            <label for="firstName">First Name:</label>
-            <input type="text" id="firstName" name="firstName" placeholder="First Name"><br>
-            <label for="lastName">Last Name:</label>
-            <input type="text" id="lastName" name="lastName" placeholder="Last Name"><br>
-            <label for="dateOfBirth">Date of Birth:</label>
-            <input type="date" id="dateOfBirth" name="dateOfBirth"><br>
-            <label for="address">Address:</label>
-            <input type="text" id="address" name="address" placeholder="Address"><br>
-            <label for="phoneNumber">Phone Number:</label>
-            <input type="text" id="phoneNumber" name="phoneNumber" placeholder="Phone Number"><br>
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" placeholder="Email"><br>
-        </div>
-        <h3>Rental Type</h3>
-        <label for="rentalType">Rental Type:</label>
-        <select id="rentalType" name="rentalType" onchange="toggleRentalFields()">
-            <option value="" selected disabled>Select Rental Type</option>
-            <option value="Apartment">Apartment</option>
-            <option value="ParkingSpot">Parking Spot</option>
-        </select><br>
-        <div id="apartmentFields" style="display: none;">
-            <label for="apartmentId">Apartment ID:</label>
-            <input type="number" id="apartmentId" name="apartmentId" min="1" placeholder="Apartment ID"><br>
-        </div>
-        <div id="parkingFields" style="display: none;">
-            <label for="parkingId">Parking Spot ID:</label>
-            <input type="number" id="parkingId" name="parkingId" min="1" placeholder="Parking Spot ID"><br>
-        </div>
-        <h3>Contract Details</h3>
-        <label for="startDate">Start Date:</label>
-        <input type="date" id="startDate" name="startDate" required><br>
-        <label for="endDate">End Date (Leave blank for indefinite):</label>
-        <input type="date" id="endDate" name="endDate"><br>
-        <button type="submit">Create Contract</button>
-    </form>
-    <div id="createContractResult"></div>
+        <!-- View Contracts Section -->
+        <section id="viewContractsSection">
+            <h2>View Contracts</h2>
+            <label for="rentalTypeFilter">Filter by Rental Type:</label>
+            <select id="rentalTypeFilter" name="rentalTypeFilter">
+                <option value="">All</option>
+                <option value="Apartment">Apartment</option>
+                <option value="ParkingSpot">Parking Spot</option>
+            </select>
+            <button onclick="fetchContracts()" class="primary-button">Fetch Contracts</button>
+            <div id="contractList"></div>
+        </section>
+
+        <!-- Create Contract Form -->
+        <section id="createContractSection">
+            <h2>Create New Contract</h2>
+            <form id="createContractForm" class="form-style">
+                <h3>Tenant Details</h3>
+                <label for="tenantId">Tenant ID (Leave blank to create a new tenant):</label>
+                <input type="number" id="tenantId" name="tenantId" min="1" placeholder="Existing Tenant ID"
+                    oninput="toggleTenantFields()"><br>
+
+                <div id="cooperativeField" style="display: block;">
+                    <label for="isCooperativeMember">Is Cooperative Member:</label>
+                    <select id="isCooperativeMember" name="isCooperativeMember">
+                        <option value="1">Yes</option>
+                        <option value="0" selected>No</option>
+                    </select><br>
+                </div>
+
+                <div id="newTenantFields" style="display: block;">
+                    <label for="firstName">First Name:</label>
+                    <input type="text" id="firstName" name="firstName" placeholder="First Name"><br>
+
+                    <label for="lastName">Last Name:</label>
+                    <input type="text" id="lastName" name="lastName" placeholder="Last Name"><br>
+
+                    <label for="dateOfBirth">Date of Birth:</label>
+                    <input type="date" id="dateOfBirth" name="dateOfBirth"><br>
+
+                    <label for="address">Address:</label>
+                    <input type="text" id="address" name="address" placeholder="Address"><br>
+
+                    <label for="phoneNumber">Phone Number:</label>
+                    <input type="text" id="phoneNumber" name="phoneNumber" placeholder="Phone Number"><br>
+
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" placeholder="Email"><br>
+                </div>
+
+                <h3>Rental Type</h3>
+                <label for="rentalType">Rental Type:</label>
+                <select id="rentalType" name="rentalType" onchange="toggleRentalFields()">
+                    <option value="" selected disabled>Select Rental Type</option>
+                    <option value="Apartment">Apartment</option>
+                    <option value="ParkingSpot">Parking Spot</option>
+                </select><br>
+
+                <div id="apartmentFields" style="display: none;">
+                    <label for="apartmentId">Apartment ID:</label>
+                    <input type="number" id="apartmentId" name="apartmentId" min="1" placeholder="Apartment ID"><br>
+                </div>
+
+                <div id="parkingFields" style="display: none;">
+                    <label for="parkingId">Parking Spot ID:</label>
+                    <input type="number" id="parkingId" name="parkingId" min="1" placeholder="Parking Spot ID"><br>
+                </div>
+
+                <h3>Contract Details</h3>
+                <label for="startDate">Start Date:</label>
+                <input type="date" id="startDate" name="startDate" required><br>
+
+                <label for="endDate">End Date (Leave blank for indefinite):</label>
+                <input type="date" id="endDate" name="endDate"><br>
+
+                <button type="submit" class="primary-button">Create Contract</button>
+            </form>
+            <div id="createContractResult"></div>
+        </section>
+    </main>
 </body>
+
 </html>
